@@ -175,7 +175,7 @@ html, body {
 
 /* Floating Controls Bar */
 .controls-bar {
-  position: absolute;
+  position: fixed;
   bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
