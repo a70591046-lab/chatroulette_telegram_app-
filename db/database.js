@@ -181,6 +181,24 @@ class Database {
     }
   }
 
+  getUserFriends(tgId) {
+    const id = String(tgId);
+    const friendLinks = this.data.friends.filter(f => (f.user1 === id || f.user2 === id) && f.status === 'accepted');
+    const friends = [];
+    friendLinks.forEach(f => {
+      const friendId = f.user1 === id ? f.user2 : f.user1;
+      const user = this.getUser(friendId);
+      if (user) {
+        friends.push({
+          tgId: user.tgId,
+          firstName: user.firstName,
+          gender: user.gender
+        });
+      }
+    });
+    return friends;
+  }
+
   // Call stats
   recordCall(durationSeconds) {
     this.data.callStats.totalCalls = (this.data.callStats.totalCalls || 0) + 1;

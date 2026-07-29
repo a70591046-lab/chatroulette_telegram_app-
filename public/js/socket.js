@@ -198,6 +198,23 @@ function initSocketConnection(tgId, webrtcManager) {
     resetVideoCallView();
   });
 
+  // ── Direct Calling System ───────────────────────
+  socket.on('direct-call-incoming', (data) => {
+    window.currentDirectCaller = data;
+    document.getElementById('incomingCallerName').innerText = `${data.callerName} sizga qo'ng'iroq qilyapti...`;
+    document.getElementById('incomingCallModal').classList.remove('hidden');
+  });
+
+  socket.on('direct-call-declined', () => {
+    showToast('❌ Foydalanuvchi qo\'ng\'iroqni rad etdi');
+    resetVideoCallView();
+  });
+
+  socket.on('direct-call-error', (data) => {
+    showToast(`❌ Xato: ${data.message}`);
+    resetVideoCallView();
+  });
+
   // ── ICE candidate passthrough ───────────────────
   webrtcManager.onIceCandidate = (candidate) => {
     if (socket && socket.connected) {

@@ -46,6 +46,145 @@ function initBot() {
     }
   });
 
+  const broadcastService = require('../services/broadcast');
+  const adminState = {};
+
+  // /admin handler
+  bot.command('admin', async (ctx) => {
+    try {
+      const tgId = String(ctx.from.id);
+      if (!config.ADMIN_IDS.includes(tgId)) return;
+
+      adminState[tgId] = null; // reset state
+      
+      const inlineButtons = [
+        [Markup.button.callback('📊 Statistika', 'admin_stats')],
+        [Markup.button.callback('📢 Majburiy obunalar', 'admin_sponsors')],
+        [Markup.button.callback('✉️ Xabar yuborish', 'admin_broadcast')]
+      ];
+
+      await ctx.reply('🛡 **Admin Paneliga Xush Kelibsiz!**\n\nQuyidagi menyudan kerakli bo\'limni tanlang:', {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard(inlineButtons)
+      });
+    } catch (err) {
+      console.error('Error in /admin command:', err.message);
+    }
+  });
+
+  bot.action('admin_stats', async (ctx) => {
+    try {
+      const tgId = String(ctx.from.id);
+      if (!config.ADMIN_IDS.includes(tgId)) return;
+      
+      const stats = db.getAnalytics();
+      const msg = `📊 **Platforma Statistikasi:**\n\n` +
+                  `👥 Jami foydalanuvchilar: ${stats.totalUsers}\n` +
+                  `📈 Kunlik faol (DAU): ${stats.dau}\n` +
+                  `📅 Oylik faol (MAU): ${stats.mau}\n` +
+                  `📞 Jami video suhbatlar: ${stats.totalCalls}\n` +
+                  `⏱ Umumiy davomiylik: ${Math.floor(stats.totalDurationSeconds / 60)} daqiqa\n\n` +
+                  `👨 Erkaklar: ${stats.genderRatio.male} | 👩 Ayollar: ${stats.genderRatio.female}\n` +
+                  `🇺🇿 UZ: ${stats.langRatio.uz} | 🇷🇺 RU: ${stats.langRatio.ru}`;
+                  
+      await ctx.answerCbQuery();
+      await ctx.reply(msg, { parse_mode: 'Markdown' });
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  bot.action('admin_sponsors', async (ctx) => {
+    try {
+      const tgId = String(ctx.from.id);
+      if (!config.ADMIN_IDS.includes(tgId)) return;
+      
+      const sponsors = db.getSponsors();
+      let msg = `📢 **Majburiy Obunalar Ro'yxati:**\n\n`;
+      if (sponsors.length === 0) {
+        msg += `Hozircha hech qanday majburiy obuna yo'q.\n`;
+      } else {
+        sponsors.forEach((s, i) => {
+          msg += `${i+1}. [${s.title}](${s.link}) (ID: ${s.id})\n`;
+        });
+      }
+      msg += `\nYangi qo'shish uchun xabarga javob qilib quyidagi formatda jo'nating:\n\n\`/add_sponsor @KanalUsername Kanal_Nomi https://t.me/KanalUsername\``;
+      
+      await ctx.answerCbQuery();
+      await ctx.reply(msg, { parse_mode: 'Markdown', disable_web_page_preview: true });
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  bot.action('admin_broadcast', async (ctx) => {
+    try {
+      const tgId = String(ctx.from.id);
+      if (!config.ADMIN_IDS.includes(tgId)) return;
+      
+      adminState[tgId] = { step: 'waiting_broadcast' };
+      await ctx.answerCbQuery();
+      await ctx.reply('✉️ **Barchaga xabar yuborish:**\n\nIltimos, yubormoqchi bo\'lgan xabaringizni (rasm, video yoki oddiy matn) hozir shu yerga yuboring. Bekor qilish uchun /cancel bosing.', { parse_mode: 'Markdown' });
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  bot.command('cancel', async (ctx) => {
+    const tgId = String(ctx.from.id);
+    if (adminState[tgId]) {
+      adminState[tgId] = null;
+      await ctx.reply('Bekor qilindi.');
+    }
+  });
+
+  bot.on('message', async (ctx, next) => {
+    const tgId = String(ctx.from.id);
+    if (!config.ADMIN_IDS.includes(tgId)) return next();
+
+    // Handle add_sponsor command directly
+    if (ctx.message.text && ctx.message.text.startsWith('/add_sponsor')) {
+      const parts = ctx.message.text.split(' ');
+      if (parts.length >= 4) {
+        const id = parts[1];
+        const link = parts[parts.length - 1];
+        const title = parts.slice(2, parts.length - 1).join(' ');
+        db.addSponsor(id, title, link);
+        return ctx.reply(`✅ Kanal qo'shildi: ${title} (${id})`);
+      } else {
+        return ctx.reply(`Xato format! Namuna:\n\`/add_sponsor @KanalUsername Kanal Nomi https://t.me/KanalUsername\``, { parse_mode: 'Markdown' });
+      }
+    }
+
+    if (ctx.message.text && ctx.message.text.startsWith('/remove_sponsor')) {
+      const parts = ctx.message.text.split(' ');
+      if (parts.length >= 2) {
+        db.removeSponsor(parts[1]);
+        return ctx.reply(`✅ Kanal o'chirildi: ${parts[1]}`);
+      }
+    }
+
+    if (adminState[tgId] && adminState[tgId].step === 'waiting_broadcast') {
+      adminState[tgId] = null;
+      await ctx.reply('Barchaga xabar yuborish boshlandi... Bu biroz vaqt olishi mumkin.');
+      try {
+        let text = ctx.message.text || ctx.message.caption || '';
+        let photoUrl = '';
+        let voiceUrl = '';
+        
+        // Simple logic for broadcast using broadcastService
+        // We will just pass the text for now, or just copy message
+        const result = await broadcastService.sendBroadcast(bot, { text });
+        await ctx.reply(`✅ Xabar yuborish yakunlandi.\n\nMuvaffaqiyatli: ${result.successful}\nXato: ${result.failed}`);
+      } catch (e) {
+        await ctx.reply('Xatolik yuz berdi: ' + e.message);
+      }
+      return;
+    }
+
+    return next();
+  });
+
   // Language switch handlers
   bot.action('set_lang_uz', async (ctx) => {
     try {

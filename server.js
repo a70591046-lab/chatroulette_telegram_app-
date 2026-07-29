@@ -60,6 +60,11 @@ app.get('/api/user/:tgId', (req, res) => {
   }
 });
 
+app.get('/api/user/:id/friends', (req, res) => {
+  const friends = db.getUserFriends(req.params.id);
+  res.json({ success: true, friends });
+});
+
 app.post('/api/user/update', (req, res) => {
   const { tgId, profile } = req.body;
   if (!tgId || !profile) {
@@ -69,65 +74,7 @@ app.post('/api/user/update', (req, res) => {
   res.json({ success: true, user: updated });
 });
 
-app.get('/api/admin/stats', (req, res) => {
-  const analytics = db.getAnalytics();
-  res.json({ success: true, stats: analytics });
-});
 
-app.get('/api/admin/sponsors', (req, res) => {
-  const sponsors = db.getSponsors();
-  res.json({ success: true, sponsors });
-});
-
-app.post('/api/admin/sponsors/add', (req, res) => {
-  const { channelId, title, link } = req.body;
-  if (!channelId) return res.status(400).json({ success: false, message: 'Channel ID required' });
-
-  const sponsors = db.addSponsor(channelId, title, link);
-  res.json({ success: true, sponsors });
-});
-
-app.post('/api/admin/sponsors/remove', (req, res) => {
-  const { channelId } = req.body;
-  if (!channelId) return res.status(400).json({ success: false, message: 'Channel ID required' });
-
-  const sponsors = db.removeSponsor(channelId);
-  res.json({ success: true, sponsors });
-});
-
-app.post('/api/admin/broadcast', async (req, res) => {
-  const { text, photoUrl, voiceUrl } = req.body;
-  if (!text && !photoUrl && !voiceUrl) {
-    return res.status(400).json({ success: false, message: 'Content required for broadcast' });
-  }
-
-  if (!botInstance) {
-    return res.status(500).json({ success: false, message: 'Bot instance unavailable' });
-  }
-
-  try {
-    const result = await broadcastService.sendBroadcast(botInstance, { text, photoUrl, voiceUrl });
-    res.json({ success: true, result });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-app.get('/api/admin/broadcasts', (req, res) => {
-  res.json({ success: true, broadcasts: db.data.broadcasts || [] });
-});
-
-app.post('/api/admin/broadcasts/edit', (req, res) => {
-  const { id, text } = req.body;
-  db.updateBroadcastLog(id, { text });
-  res.json({ success: true, broadcasts: db.data.broadcasts });
-});
-
-app.post('/api/admin/broadcasts/delete', (req, res) => {
-  const { id } = req.body;
-  db.deleteBroadcastLog(id);
-  res.json({ success: true, broadcasts: db.data.broadcasts });
-});
 
 let botInstance = null;
 

@@ -38,6 +38,18 @@ class MatchmakingService {
     }
   }
 
+  forceMatch(socketId1, socketId2) {
+    this.removeFromQueue(socketId1);
+    this.removeFromQueue(socketId2);
+    
+    // If they are in another call, end it
+    this.endCall(socketId1);
+    this.endCall(socketId2);
+
+    this.activePairs.set(socketId1, socketId2);
+    this.activePairs.set(socketId2, socketId1);
+  }
+
   findMatch(item) {
     for (let i = 0; i < this.waitingQueue.length; i++) {
       const candidate = this.waitingQueue[i];

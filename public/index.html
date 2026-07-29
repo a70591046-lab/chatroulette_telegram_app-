@@ -299,106 +299,21 @@
           <textarea id="profileBioInput" rows="2" class="w-full glass-input px-4 py-2 rounded-xl text-xs" placeholder="Qisqacha ta'rif..."></textarea>
         </div>
 
+        <!-- Friends List Section -->
+        <div class="border-t border-slate-800 pt-4 mt-4">
+          <h3 class="text-xs font-bold text-cyan-400 mb-2">📞 Mening do'stlarim / Obunachilarim</h3>
+          <div id="friendsListContainer" class="space-y-2 max-h-48 overflow-y-auto">
+            <div class="text-center text-slate-500 text-[10px] py-4">Sizda hali do'stlar yo'q.</div>
+          </div>
+        </div>
+
         <button onclick="saveUserProfile()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 font-bold text-xs shadow-lg" data-i18n="save_profile">
           Profilni saqlash
         </button>
       </div>
     </section>
 
-    <!-- TAB 3: ADMIN DASHBOARD (HIDDEN FOR REGULAR USERS) -->
-    <section id="adminTabContent" class="flex-1 hidden space-y-4 max-w-2xl mx-auto w-full">
-      <div class="glass-panel p-5 rounded-3xl space-y-4">
-        <h2 class="text-base font-bold text-cyan-400 border-b border-slate-800 pb-2" data-i18n="admin_title">
-          Admin Panel & Analitika
-        </h2>
-
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-2 gap-3 text-xs">
-          <div class="glass-input p-3 rounded-2xl">
-            <div class="text-slate-400" data-i18n="total_users">Jami foydalanuvchilar</div>
-            <div id="statTotalUsers" class="font-extrabold text-xl text-purple-400 mt-1">0</div>
-          </div>
-          <div class="glass-input p-3 rounded-2xl">
-            <div class="text-slate-400" data-i18n="dau">Kunlik faol (DAU)</div>
-            <div id="statDau" class="font-extrabold text-xl text-cyan-400 mt-1">0</div>
-          </div>
-          <div class="glass-input p-3 rounded-2xl">
-            <div class="text-slate-400" data-i18n="mau">Oylik faol (MAU)</div>
-            <div id="statMau" class="font-extrabold text-xl text-emerald-400 mt-1">0</div>
-          </div>
-          <div class="glass-input p-3 rounded-2xl">
-            <div class="text-slate-400" data-i18n="total_calls">Jami video suhbatlar</div>
-            <div id="statTotalCalls" class="font-extrabold text-xl text-amber-400 mt-1">0</div>
-          </div>
-        </div>
-
-        <!-- Total Duration Badge -->
-        <div class="glass-input p-3 rounded-2xl flex items-center justify-between text-xs">
-          <span class="text-slate-400" data-i18n="call_duration">Umumiy davomiylik:</span>
-          <span id="statCallDuration" class="font-extrabold text-cyan-300">0 min</span>
-        </div>
-
-        <!-- Ratio Breakdown -->
-        <div class="space-y-3 pt-2">
-          <!-- Gender ratio bar -->
-          <div>
-            <div class="flex justify-between text-[11px] font-semibold mb-1">
-              <span id="genderMalePct" class="text-cyan-400">50% Male</span>
-              <span id="genderFemalePct" class="text-pink-400">50% Female</span>
-            </div>
-            <div class="w-full h-2 rounded-full bg-pink-500/30 overflow-hidden">
-              <div id="genderBarMale" class="h-full bg-cyan-400 rounded-full" style="width: 50%"></div>
-            </div>
-          </div>
-
-          <!-- Language ratio bar -->
-          <div>
-            <div class="flex justify-between text-[11px] font-semibold mb-1">
-              <span id="langUzPct" class="text-emerald-400">50% UZ</span>
-              <span id="langRuPct" class="text-purple-400">50% RU</span>
-            </div>
-            <div class="w-full h-2 rounded-full bg-purple-500/30 overflow-hidden">
-              <div id="langBarUz" class="h-full bg-emerald-400 rounded-full" style="width: 50%"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sponsor Channels Guard Management -->
-        <div class="border-t border-slate-800 pt-4">
-          <h3 class="text-xs font-bold text-amber-400 mb-2" data-i18n="sponsor_section">
-            Majburiy Obuna Kanallari (Guard)
-          </h3>
-          <div class="space-y-2 mb-3">
-            <input id="sponsorIdInput" type="text" placeholder="@mychannel" class="w-full glass-input px-3 py-2 rounded-xl text-xs">
-            <input id="sponsorTitleInput" type="text" placeholder="Kanal Nomi" class="w-full glass-input px-3 py-2 rounded-xl text-xs">
-            <input id="sponsorLinkInput" type="text" placeholder="https://t.me/mychannel" class="w-full glass-input px-3 py-2 rounded-xl text-xs">
-            <button onclick="adminDashboard.addSponsor()" class="w-full py-2 bg-amber-500/20 text-amber-300 font-bold rounded-xl text-xs hover:bg-amber-500/30">
-              ➕ Kanal Qo'shish
-            </button>
-          </div>
-          <div id="sponsorListContainer"></div>
-        </div>
-
-        <!-- Broadcasting Section -->
-        <div class="border-t border-slate-800 pt-4">
-          <h3 class="text-xs font-bold text-purple-400 mb-2" data-i18n="broadcast_section">
-            Ommaviy Xabar Yuborish (Broadcasting)
-          </h3>
-          <div class="space-y-2 mb-3">
-            <textarea id="broadcastTextInput" rows="2" placeholder="Xabar matni (Markdown)..." class="w-full glass-input px-3 py-2 rounded-xl text-xs"></textarea>
-            <input id="broadcastPhotoInput" type="text" placeholder="Rasm URL (Ixtiyoriy)..." class="w-full glass-input px-3 py-2 rounded-xl text-xs">
-            <input id="broadcastVoiceInput" type="text" placeholder="Audio URL (Ixtiyoriy)..." class="w-full glass-input px-3 py-2 rounded-xl text-xs">
-            <button id="sendBroadcastBtn" onclick="adminDashboard.sendBroadcast()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-cyan-500 font-bold rounded-2xl text-xs">
-              🚀 Barchaga Yuborish
-            </button>
-          </div>
-          
-          <h4 class="text-[11px] font-bold text-slate-400 mb-2" data-i18n="broadcast_history">Yuborilgan Xabarlar Tarixi</h4>
-          <div id="broadcastHistoryContainer"></div>
-        </div>
-
-      </div>
-    </section>
+    <!-- TAB 3: ADMIN DASHBOARD MOVED TO TELEGRAM BOT -->
 
   </main>
 
@@ -414,17 +329,33 @@
       <span data-i18n="tab_profile">Profil</span>
     </button>
 
-    <!-- Admin tab button (Hidden by default, shown only for Admin tgIds) -->
-    <button id="tabBtnAdmin" onclick="switchTab('admin')" class="tab-btn flex flex-col items-center text-xs font-bold text-slate-400 pt-1 hidden">
-      <i class="fas fa-chart-line text-base mb-0.5"></i>
-      <span data-i18n="tab_admin">Admin</span>
-    </button>
+
   </nav>
+
+  <!-- Incoming Call Modal -->
+  <div id="incomingCallModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel p-6 rounded-3xl max-w-sm w-full text-center border border-purple-500/30">
+      <div class="w-20 h-20 bg-purple-500/20 rounded-full mx-auto flex items-center justify-center mb-4 animate-pulse">
+        <i class="fas fa-phone-volume text-3xl text-purple-400"></i>
+      </div>
+      <h3 class="text-lg font-bold text-white mb-1">Kiruvchi qo'ng'iroq!</h3>
+      <p id="incomingCallerName" class="text-sm text-cyan-300 mb-6">Asilbek sizga qo'ng'iroq qilyapti...</p>
+      
+      <div class="flex gap-4 justify-center">
+        <button onclick="acceptDirectCall()" class="flex-1 py-3 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-2xl font-bold text-xs hover:bg-emerald-500/40 transition-colors">
+          <i class="fas fa-phone mr-1"></i> Qabul qilish
+        </button>
+        <button onclick="declineDirectCall()" class="flex-1 py-3 bg-red-500/20 text-red-400 border border-red-500/30 rounded-2xl font-bold text-xs hover:bg-red-500/40 transition-colors">
+          <i class="fas fa-phone-slash mr-1"></i> Rad etish
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Application Scripts -->
   <script src="js/i18n.js?v=2"></script>
   <script src="js/webrtc.js?v=2"></script>
-  <script src="js/admin.js?v=2"></script>
+
   <script src="js/socket.js?v=2"></script>
   <script src="js/app.js?v=2"></script>
 </body>

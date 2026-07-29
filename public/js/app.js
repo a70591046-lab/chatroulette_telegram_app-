@@ -39,10 +39,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const isAdmin = ADMIN_TELEGRAM_IDS.includes(String(tgUser.tgId));
-  const adminTabBtn = document.getElementById('tabBtnAdmin');
-  if (adminTabBtn) {
-    adminTabBtn.classList.toggle('hidden', !isAdmin);
-  }
 
   webrtc = new WebRTCManager({
     iceServers: [
@@ -139,6 +135,50 @@ function startMatchmakingSearch() {
   }
 }
 
+// ── Direct Calling Functions ──────────────────────
+window.initiateDirectCall = function(targetTgId, targetName) {
+  if (!socket || !socket.connected) {
+    showToast('❌ Server bilan aloqa yo\'q');
+    return;
+  }
+  showSearchingState();
+  const searchStatus = document.getElementById('searchStatusText');
+  if (searchStatus) searchStatus.innerText = `${targetName} chaqirilmoqda...`;
+  
+  webrtc.initLocalStream().then(stream => {
+    if (stream) document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
+  }).catch(() => {});
+
+  socket.emit('direct-call-request', { 
+    targetTgId: targetTgId,
+    callerName: tgUser.firstName || 'Foydalanuvchi'
+  });
+};
+
+window.acceptDirectCall = function() {
+  document.getElementById('incomingCallModal').classList.add('hidden');
+  if (window.currentDirectCaller && socket) {
+    showSearchingState();
+    const searchStatus = document.getElementById('searchStatusText');
+    if (searchStatus) searchStatus.innerText = `Ulanmoqda...`;
+    
+    webrtc.initLocalStream().then(stream => {
+      if (stream) document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
+    }).catch(() => {});
+    
+    socket.emit('direct-call-accept', window.currentDirectCaller);
+    window.currentDirectCaller = null;
+  }
+};
+
+window.declineDirectCall = function() {
+  document.getElementById('incomingCallModal').classList.add('hidden');
+  if (window.currentDirectCaller && socket) {
+    socket.emit('direct-call-decline', window.currentDirectCaller);
+    window.currentDirectCaller = null;
+  }
+};
+
 async function loadUserProfile() {
   try {
     const res = await fetch(`${BACKEND_API_URL}/api/user/${tgUser.tgId}`);
@@ -177,6 +217,46 @@ async function loadUserProfile() {
     setAppLanguage('uz');
     fillProfileForm();
   }
+  loadFriendsList();
+}
+
+async function loadFriendsList() {
+  try {
+    const res = await fetch(`${BACKEND_API_URL}/api/user/${tgUser.tgId}/friends`);
+    const data = await res.json();
+    if (data.success) {
+      renderFriendsList(data.friends);
+    }
+  } catch (e) {
+    console.error('Error loading friends', e);
+  }
+}
+
+function renderFriendsList(friends) {
+  const container = document.getElementById('friendsListContainer');
+  if (!container) return;
+  
+  if (!friends || friends.length === 0) {
+    container.innerHTML = `<div class="text-center text-slate-500 text-[10px] py-4">Sizda hali do'stlar yo'q.</div>`;
+    return;
+  }
+
+  container.innerHTML = friends.map(f => `
+    <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold">
+          ${f.firstName.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <div class="text-sm font-bold text-slate-200">${f.firstName}</div>
+          <div class="text-[10px] text-slate-400">${f.gender === 'female' ? 'Ayol' : 'Erkak'}</div>
+        </div>
+      </div>
+      <button onclick="initiateDirectCall('${f.tgId}', '${f.firstName}')" class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/40 transition">
+        <i class="fas fa-phone"></i>
+      </button>
+    </div>
+  `).join('');
 }
 
 function setChatMode(mode) {
@@ -471,7 +551,7 @@ function resetVideoCallView() {
 }
 
 function switchTab(tabId) {
-  ['chatTabContent', 'profileTabContent', 'adminTabContent'].forEach(id => {
+  ['chatTabContent', 'profileTabContent'].forEach(id => {
     document.getElementById(id)?.classList.add('hidden');
   });
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -485,10 +565,7 @@ function switchTab(tabId) {
   } else if (tabId === 'profile') {
     document.getElementById('profileTabContent')?.classList.remove('hidden');
     document.getElementById('tabBtnProfile')?.classList.add('text-purple-400', 'border-purple-400');
-  } else if (tabId === 'admin') {
-    document.getElementById('adminTabContent')?.classList.remove('hidden');
-    document.getElementById('tabBtnAdmin')?.classList.add('text-purple-400', 'border-purple-400');
-    if (typeof adminDashboard !== 'undefined') adminDashboard.loadAll();
+  }
   }
 }
 

@@ -3,9 +3,14 @@ const db = require('../db/database');
 
 module.exports = function setupWebRTCSignaling(io) {
   const socketCallStartTime = new Map(); // socketId -> startTime
+  const connectedUsers = new Map(); // tgId -> socketId
 
   io.on('connection', (socket) => {
     console.log(`[Socket] Connected: ${socket.id}`);
+    const tgId = socket.handshake.query.tgId;
+    if (tgId) {
+      connectedUsers.set(String(tgId), socket.id);
+    }
 
     // Join 1-on-1 Matchmaking Queue
     socket.on('start-search', (data) => {
@@ -189,6 +194,48 @@ module.exports = function setupWebRTCSignaling(io) {
       const { fromTgId, toTgId } = data;
       if (fromTgId && toTgId) db.addFriendRequest(fromTgId, toTgId);
       if (peerSocketId) io.to(peerSocketId).emit('received-friend-request', { fromSocket: socket.id });
+    });
+
+    // Direct Call System
+    socket.on('direct-call-request', (data) => {
+      const targetSocketId = connectedUsers.get(String(data.targetTgId));
+      if (targetSocketId) {
+        io.to(targetSocketId).emit('direct-call-incoming', {
+          callerTgId: socket.handshake.query.tgId,
+          callerName: data.callerName,
+          callerSocketId: socket.id
+        });
+      } else {
+        socket.emit('direct-call-error', { message: 'Foydalanuvchi oflayn' });
+      }
+    });
+
+    socket.on('direct-call-accept', (data) => {
+      const callerSocketId = data.callerSocketId;
+      if (io.sockets.sockets.get(callerSocketId)) {
+        // Set them up in a 1-on-1 match
+        matchmaking.forceMatch(callerSocketId, socket.id);
+        const myProfile = db.getUser(socket.handshake.query.tgId) || { firstName: 'Suhbatdosh' };
+        const peerProfile = db.getUser(data.callerTgId) || { firstName: 'Suhbatdosh' };
+        
+        socket.emit('match-found', {
+          peerSocketId: callerSocketId,
+          isInitiator: false,
+          peerProfile: peerProfile,
+          direct: true
+        });
+
+        io.to(callerSocketId).emit('match-found', {
+          peerSocketId: socket.id,
+          isInitiator: true,
+          peerProfile: myProfile,
+          direct: true
+        });
+      }
+    });
+
+    socket.on('direct-call-decline', (data) => {
+      io.to(data.callerSocketId).emit('direct-call-declined');
     });
 
     // Live Chat
