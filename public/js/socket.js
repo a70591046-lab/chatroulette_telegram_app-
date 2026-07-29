@@ -7,10 +7,13 @@ var socket = null;
 var currentPeerSocketId = null;
 var currentRoomId = null;
 
+// Railway backend URL (Socket.io server)
+var BACKEND_URL = 'https://web-production-65a7f.up.railway.app';
+
 function initSocketConnection(tgId, webrtcManager) {
   if (socket && socket.connected) return socket;
 
-  socket = io({
+  socket = io(BACKEND_URL, {
     query: { tgId: String(tgId) },
     transports: ['websocket', 'polling'],
     reconnection: true,
