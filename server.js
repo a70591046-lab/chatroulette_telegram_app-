@@ -136,19 +136,24 @@ server.listen(config.PORT, async () => {
   console.log(`🚀 Chatroulette Server listening on port ${config.PORT}`);
   console.log(`🔗 Local WebApp URL: ${config.WEBAPP_URL}`);
 
-  // Initialize localtunnel (fast, no IP prompt with bypass header)
-  try {
-    const localtunnel = require('localtunnel');
-    const tunnel = await localtunnel({
-      port: config.PORT,
-      subdomain: 'chatroulette-uz-app'
-    });
-    config.WEBAPP_URL = tunnel.url;
-    console.log(`🌍 HTTPS TUNNEL URL: ${tunnel.url}`);
-    tunnel.on('close', () => console.log('Tunnel closed'));
-    tunnel.on('error', (err) => console.error('Tunnel error:', err.message));
-  } catch (e) {
-    console.log('Tunnel init error:', e.message);
+  // Only use localtunnel in local dev (when WEBAPP_URL is localhost)
+  const isLocal = config.WEBAPP_URL.includes('localhost') || config.WEBAPP_URL.includes('127.0.0.1');
+  if (isLocal) {
+    try {
+      const localtunnel = require('localtunnel');
+      const tunnel = await localtunnel({
+        port: config.PORT,
+        subdomain: 'chatroulette-uz-app'
+      });
+      config.WEBAPP_URL = tunnel.url;
+      console.log(`🌍 HTTPS TUNNEL URL: ${tunnel.url}`);
+      tunnel.on('close', () => console.log('Tunnel closed'));
+      tunnel.on('error', (err) => console.error('Tunnel error:', err.message));
+    } catch (e) {
+      console.log('Tunnel init error:', e.message);
+    }
+  } else {
+    console.log(`☁️ Cloud mode — WebApp URL: ${config.WEBAPP_URL}`);
   }
 
   console.log(`=================================================`);
