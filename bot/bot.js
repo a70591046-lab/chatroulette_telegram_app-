@@ -126,7 +126,7 @@ function initBot() {
       return;
     }
 
-    const webAppUrl = `${config.WEBAPP_URL}?tgId=${tgId}&v=3`;
+    const webAppUrl = `${config.WEBAPP_URL}?tgId=${tgId}&v=4`;
     const isHttps = webAppUrl.startsWith('https://');
 
     // Dynamically update Telegram Bot Menu Button for instant persistent WebApp access
