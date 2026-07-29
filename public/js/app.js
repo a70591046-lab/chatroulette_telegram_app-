@@ -4,6 +4,9 @@ let webrtc = null;
 let activeChatMode = 'solo';
 let socketReady = false;
 
+// Railway backend API URL
+const BACKEND_API_URL = 'https://web-production-65a7f.up.railway.app';
+
 const ADMIN_TELEGRAM_IDS = ['7713174177', '123456789'];
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -138,7 +141,7 @@ function startMatchmakingSearch() {
 
 async function loadUserProfile() {
   try {
-    const res = await fetch(`/api/user/${tgUser.tgId}`);
+    const res = await fetch(`${BACKEND_API_URL}/api/user/${tgUser.tgId}`);
     const data = await res.json();
     if (data.success && data.user) {
       currentProfile = data.user;
@@ -261,7 +264,7 @@ async function saveUserProfile() {
   currentProfile.targetGender = document.getElementById('profileTargetGenderSelect').value;
 
   try {
-    const res = await fetch('/api/user/update', {
+    const res = await fetch(`${BACKEND_API_URL}/api/user/update`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tgId: tgUser.tgId, profile: currentProfile })

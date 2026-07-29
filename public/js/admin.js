@@ -1,4 +1,4 @@
-class AdminDashboard {
+﻿class AdminDashboard {
   constructor() {
     this.stats = null;
     this.sponsors = [];
@@ -15,7 +15,7 @@ class AdminDashboard {
 
   async fetchStats() {
     try {
-      const res = await fetch('/api/admin/stats');
+      const res = await fetch('https://web-production-65a7f.up.railway.app/api/admin/stats');
       const data = await res.json();
       if (data.success) {
         this.stats = data.stats;
@@ -28,7 +28,7 @@ class AdminDashboard {
 
   async fetchSponsors() {
     try {
-      const res = await fetch('/api/admin/sponsors');
+      const res = await fetch('https://web-production-65a7f.up.railway.app/api/admin/sponsors');
       const data = await res.json();
       if (data.success) {
         this.sponsors = data.sponsors;
@@ -41,7 +41,7 @@ class AdminDashboard {
 
   async fetchBroadcasts() {
     try {
-      const res = await fetch('/api/admin/broadcasts');
+      const res = await fetch('https://web-production-65a7f.up.railway.app/api/admin/broadcasts');
       const data = await res.json();
       if (data.success) {
         this.broadcasts = data.broadcasts;
@@ -113,7 +113,7 @@ class AdminDashboard {
     if (!channelId) return alert('Kanal ID yoki Usernameniyiring!');
 
     try {
-      const res = await fetch('/api/admin/sponsors/add', {
+      const res = await fetch('https://web-production-65a7f.up.railway.app/api/admin/sponsors/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ channelId, title, link })
@@ -135,7 +135,7 @@ class AdminDashboard {
     if (!confirm(`Kanalni o'chirishni tasdiqlaysizmi: ${channelId}?`)) return;
 
     try {
-      const res = await fetch('/api/admin/sponsors/remove', {
+      const res = await fetch('https://web-production-65a7f.up.railway.app/api/admin/sponsors/remove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ channelId })
@@ -164,7 +164,7 @@ class AdminDashboard {
     btn.innerText = '⏳ Yuborilmoqda...';
 
     try {
-      const res = await fetch('/api/admin/broadcast', {
+      const res = await fetch('https://web-production-65a7f.up.railway.app/api/admin/broadcast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, photoUrl, voiceUrl })
@@ -221,7 +221,7 @@ class AdminDashboard {
     const newText = prompt('Xabar matnini tahrirlang:', b.text);
     if (newText !== null) {
       try {
-        const res = await fetch('/api/admin/broadcasts/edit', {
+        const res = await fetch('https://web-production-65a7f.up.railway.app/api/admin/broadcasts/edit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id, text: newText })
@@ -240,7 +240,7 @@ class AdminDashboard {
   async deleteBroadcast(id) {
     if (!confirm('Ushbu broadcast logini o\'chirishni tasdiqlaysizmi?')) return;
     try {
-      const res = await fetch('/api/admin/broadcasts/delete', {
+      const res = await fetch('https://web-production-65a7f.up.railway.app/api/admin/broadcasts/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
