@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chatroulette Telegram Mini App</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Socket.io & Telegram WebApp SDK -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- Custom Glassmorphism Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <script>
+    // Bypass localtunnel IP page automatically
+    (function() {
+      try {
+        document.cookie = 'bypass-tunnel-reminder=1; path=/; SameSite=None; Secure';
+        document.cookie = 'localtunnel=true; path=/; SameSite=None; Secure';
+      } catch(e) {}
+    })();
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col min-h-screen">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center pointer-events-none"></div>
+
+  <!-- Header Bar -->
+  <header class="glass-panel sticky top-0 z-40 px-4 py-2.5 flex items-center justify-between border-b border-slate-800">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-cyan-400 flex items-center justify-center font-black text-white text-lg">
+        ⚡
+      </div>
+      <span class="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 text-lg tracking-wide" data-i18n="app_title">
+        CHATROULETTE
+      </span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- Leave Chat Button (Top Bar) -->
+      <button id="leaveChatTopBtn" onclick="leaveChatRoom()" class="hidden px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30 transition">
+        🚪 Tark etish
+      </button>
+
+      <!-- Language Switcher Button -->
+      <button id="langToggleBtn" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800/80 border border-slate-700 hover:border-purple-500 transition text-cyan-300">
+        🇺🇿 UZ
+      </button>
+    </div>
+  </header>
+
+  <!-- Main View Router Container -->
+  <main class="flex-1 p-3 sm:p-4 max-w-4xl mx-auto w-full flex flex-col justify-center">
+
+    <!-- TAB 1: CHATROULETTE & VIDEO CALL -->
+    <section id="chatTabContent" class="flex-1 flex flex-col">
+      
+      <!-- Top Mode & Filter Bar -->
+      <div class="glass-panel p-2.5 px-4 rounded-2xl mb-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <!-- Room Mode Switcher (1-on-1 vs Group) -->
+        <div class="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+          <button id="modeSoloBtn" onclick="setChatMode('solo')" class="px-3 py-1 rounded-lg font-bold text-xs bg-purple-600 text-white transition">
+            👤 1-ga-1 Solo
+          </button>
+          <button id="modeGroupBtn" onclick="setChatMode('group')" class="px-3 py-1 rounded-lg font-bold text-xs text-slate-400 hover:text-white transition">
+            👥 Guruh Video
+          </button>
+        </div>
+
+        <!-- Gender Filter Select -->
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400 font-semibold" data-i18n="looking_for">Qidiruv:</span>
+          <select id="matchTargetGenderSelect" class="glass-input px-3 py-1 rounded-xl text-xs font-bold text-cyan-300 focus:outline-none">
+            <option value="any" data-i18n="gender_any">Farqi yo'q</option>
+            <option value="female" data-i18n="gender_female">Ayol</option>
+            <option value="male" data-i18n="gender_male">Erkak</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Main Video Container Frame -->
+      <div id="videoWrapper" class="video-wrapper flex-1 flex items-center justify-center relative">
+        
+        <!-- Persistent Media Permission Request Overlay (Shown if permission is missing) -->
+        <div id="mediaPermissionOverlay" class="hidden absolute inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+          <div class="w-20 h-20 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 flex items-center justify-center text-3xl mb-4 animate-pulse">
+            🎥
+          </div>
+          <h3 class="text-base font-bold text-white mb-2">Kamera va Mikrofonga Ruxsat Bering</h3>
+          <p class="text-xs text-slate-400 mb-6 max-w-xs">Video muloqotdan foydalanish uchun qurilmangiz kamerasiga bir marta ruxsat berishingiz kerak.</p>
+          <button onclick="requestCameraMicPermission()" class="px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 font-extrabold text-xs shadow-lg hover:brightness-110 active:scale-95 transition">
+            📹 Ruxsat Berish
+          </button>
+        </div>
+
+        <!-- State A: Initial Idle View -->
+        <div id="initialMatchView" class="flex flex-col items-center justify-center p-6 text-center">
+          <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600 to-cyan-500 p-1 mb-4 animate-pulse">
+            <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-4xl">
+              🎥
+            </div>
+          </div>
+          <h2 id="matchTitleText" class="text-xl font-bold text-white mb-2">Tasodifiy Video Muloqot</h2>
+          <p id="matchDescText" class="text-xs text-slate-400 mb-6 max-w-xs">Yangi do'stlar topish va videoni boshlash uchun tugmani bosing.</p>
+          <button id="startSearchBtn" class="w-full max-w-xs py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 font-extrabold text-sm tracking-wider shadow-lg hover:brightness-110 active:scale-95 transition">
+            🚀 <span data-i18n="start_search">Suhbatdosh izlash</span>
+          </button>
+        </div>
+
+        <!-- State B: Radar Searching Animation -->
+        <div id="searchingRadarView" class="radar-container hidden">
+          <div class="radar-pulse mb-6">
+            <i class="fas fa-search text-3xl text-purple-400"></i>
+          </div>
+          <div class="text-sm font-semibold text-cyan-300 animate-bounce mb-4" data-i18n="searching_peer">Suhbatdosh qidirilmoqda...</div>
+          <button id="cancelSearchBtn" class="px-6 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold text-red-400 hover:bg-slate-700">
+            Bekor qilish
+          </button>
+        </div>
+
+        <!-- State C: Active Video Call Overlay (1-on-1 Solo Mode) -->
+        <div id="activeCallView" class="w-full h-full hidden relative">
+          
+          <!-- Remote Video (Full Screen Stream) -->
+          <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+          
+          <!-- Local Video (Floating PiP Preview) -->
+          <video id="localVideo" autoplay playsinline muted></video>
+
+          <!-- Peer Profile info Overlay -->
+          <div class="absolute top-4 left-4 z-30 glass-panel px-4 py-2 rounded-2xl border border-white/10">
+            <div id="peerNameTag" class="font-extrabold text-xs text-cyan-300">Suhbatdosh, 22</div>
+            <div id="peerHobbiesTag" class="text-[10px] text-slate-400">IT, Gaming</div>
+          </div>
+
+          <!-- Live Chat Overlay Messages -->
+          <div id="chatOverlayContainer" class="chat-overlay"></div>
+
+          <!-- Live Chat Input Bar -->
+          <div class="absolute bottom-20 left-4 right-4 z-30 flex gap-2 max-w-lg mx-auto">
+            <input id="chatInput" type="text" placeholder="Xabar yozing..." class="glass-input flex-1 px-4 py-2.5 rounded-xl text-xs focus:outline-none" data-i18n="send_msg_placeholder">
+            <button id="sendChatBtn" class="px-4 py-2.5 rounded-xl bg-purple-600 text-xs font-bold hover:bg-purple-500">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+
+          <!-- Floating Video Controls Bar -->
+          <div class="controls-bar">
+            <!-- Camera Toggle -->
+            <button id="camToggleBtn" class="ctrl-btn" title="Camera On/Off">
+              <i class="fas fa-video"></i>
+            </button>
+            
+            <!-- Flip Camera (Front/Back) -->
+            <button id="flipCamBtn" class="ctrl-btn text-cyan-400" title="Flip Camera">
+              <i class="fas fa-camera-rotate"></i>
+            </button>
+
+            <!-- Mic Toggle -->
+            <button id="micToggleBtn" class="ctrl-btn btn-active-mic" title="Mic Mute/Unmute">
+              <i class="fas fa-microphone"></i>
+            </button>
+
+            <!-- Like Heart Button -->
+            <button id="likeBtn" class="ctrl-btn btn-like" title="Like">
+              <i class="fas fa-heart"></i>
+            </button>
+
+            <!-- Follow Button -->
+            <button id="followBtn" class="ctrl-btn text-amber-400" title="Follow">
+              <i class="fas fa-star"></i>
+            </button>
+
+            <!-- Friend Request -->
+            <button id="friendReqBtn" class="ctrl-btn text-emerald-400" title="Friend Request">
+              <i class="fas fa-user-plus"></i>
+            </button>
+
+            <!-- Skip Peer -->
+            <button id="skipPeerBtn" class="ctrl-btn btn-next" title="Next Peer">
+              <i class="fas fa-forward"></i>
+            </button>
+
+            <!-- End Call / Leave Chat -->
+            <button id="endCallBtn" onclick="leaveChatRoom()" class="ctrl-btn btn-end" title="Chatdan chiqish / End Call">
+              <i class="fas fa-phone-slash"></i>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- State D: Active Group Video Chat Lounge -->
+        <div id="activeGroupView" class="w-full h-full hidden relative flex flex-col p-2">
+          
+          <!-- Top Group Bar -->
+          <div class="glass-panel px-4 py-2 rounded-2xl mb-2 flex items-center justify-between z-20 flex-shrink-0">
+            <span class="text-xs font-bold text-cyan-300">👥 Guruh Video Room Lounge</span>
+            <span id="groupMemberCountBadge" class="text-xs font-semibold text-purple-400 bg-purple-500/20 px-3 py-1 rounded-full border border-purple-500/30">1/4 A'zo</span>
+          </div>
+
+          <!-- Group Video 4-Grid Container -->
+          <div id="groupVideoGrid" class="group-grid flex-1">
+            <!-- Dynamic video tiles for up to 4 group members -->
+          </div>
+
+          <!-- Floating Group Controls Bar (ALWAYS VISIBLE ON PC & MOBILE) -->
+          <div class="controls-bar">
+            <!-- Group Mic Toggle -->
+            <button id="groupMicToggleBtn" onclick="toggleGroupMic()" class="ctrl-btn btn-active-mic" title="Mikrofon Ovozini Ochish/Yoqish">
+              <i class="fas fa-microphone"></i>
+            </button>
+
+            <!-- Group Camera Toggle -->
+            <button id="groupCamToggleBtn" onclick="toggleGroupCam()" class="ctrl-btn" title="Kamera Yoqish/O'chirish">
+              <i class="fas fa-video"></i>
+            </button>
+
+            <!-- Group Flip Camera -->
+            <button id="groupFlipCamBtn" onclick="webrtc.flipCamera()" class="ctrl-btn text-cyan-400" title="Kamerani Almashtirish">
+              <i class="fas fa-camera-rotate"></i>
+            </button>
+
+            <!-- Group Leave Room Button -->
+            <button id="groupLeaveBtn" onclick="leaveChatRoom()" class="ctrl-btn btn-end" title="Guruhni Tark Etish">
+              <i class="fas fa-door-open"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: PROFILE & SETTINGS -->
+    <section id="profileTabContent" class="flex-1 hidden">
+      <div class="glass-panel p-5 rounded-3xl space-y-4 max-w-lg mx-auto w-full">
+        <h2 class="text-base font-bold text-purple-400 border-b border-slate-800 pb-2" data-i18n="profile_title">
+          Profil sozlamalari
+        </h2>
+
+        <!-- Stats Overview Badges -->
+        <div class="grid grid-cols-3 gap-2 py-2">
+          <div class="glass-input p-3 rounded-2xl text-center">
+            <div id="likesCountBadge" class="font-extrabold text-lg text-pink-400">0</div>
+            <div class="text-[10px] text-slate-400" data-i18n="likes_count">Like'lar</div>
+          </div>
+          <div class="glass-input p-3 rounded-2xl text-center">
+            <div id="followersCountBadge" class="font-extrabold text-lg text-amber-400">0</div>
+            <div class="text-[10px] text-slate-400" data-i18n="followers_count">Obunachilar</div>
+          </div>
+          <div class="glass-input p-3 rounded-2xl text-center">
+            <div class="font-extrabold text-lg text-emerald-400">0</div>
+            <div class="text-[10px] text-slate-400" data-i18n="friends_count">Do'stlar</div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1" data-i18n="name_label">Ismingiz:</label>
+          <input id="profileNameInput" type="text" class="w-full glass-input px-4 py-2.5 rounded-xl text-xs">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1" data-i18n="age_label">Yoshingiz:</label>
+            <input id="profileAgeInput" type="number" value="20" class="w-full glass-input px-4 py-2.5 rounded-xl text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1" data-i18n="gender_label">Jinsingiz:</label>
+            <select id="profileGenderSelect" class="w-full glass-input px-4 py-2.5 rounded-xl text-xs text-cyan-300">
+              <option value="male" data-i18n="gender_male">Erkak</option>
+              <option value="female" data-i18n="gender_female">Ayol</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1" data-i18n="target_label">Kimni qidiryapsiz?</label>
+          <select id="profileTargetGenderSelect" class="w-full glass-input px-4 py-2.5 rounded-xl text-xs text-purple-300">
+            <option value="any" data-i18n="gender_any">Farqi yo'q</option>
+            <option value="female" data-i18n="gender_female">Ayol</option>
+            <option value="male" data-i18n="gender_male">Erkak</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1" data-i18n="hobbies_label">Xobbilar va qiziqishlar:</label>
+          <div id="hobbyChipsContainer" class="flex flex-wrap gap-2 pt-1"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">O'zingiz haqingizda (Bio):</label>
+          <textarea id="profileBioInput" rows="2" class="w-full glass-input px-4 py-2 rounded-xl text-xs" placeholder="Qisqacha ta'rif..."></textarea>
+        </div>
+
+        <button onclick="saveUserProfile()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 font-bold text-xs shadow-lg" data-i18n="save_profile">
+          Profilni saqlash
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 3: ADMIN DASHBOARD (HIDDEN FOR REGULAR USERS) -->
+    <section id="adminTabContent" class="flex-1 hidden space-y-4 max-w-2xl mx-auto w-full">
+      <div class="glass-panel p-5 rounded-3xl space-y-4">
+        <h2 class="text-base font-bold text-cyan-400 border-b border-slate-800 pb-2" data-i18n="admin_title">
+          Admin Panel & Analitika
+        </h2>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="glass-input p-3 rounded-2xl">
+            <div class="text-slate-400" data-i18n="total_users">Jami foydalanuvchilar</div>
+            <div id="statTotalUsers" class="font-extrabold text-xl text-purple-400 mt-1">0</div>
+          </div>
+          <div class="glass-input p-3 rounded-2xl">
+            <div class="text-slate-400" data-i18n="dau">Kunlik faol (DAU)</div>
+            <div id="statDau" class="font-extrabold text-xl text-cyan-400 mt-1">0</div>
+          </div>
+          <div class="glass-input p-3 rounded-2xl">
+            <div class="text-slate-400" data-i18n="mau">Oylik faol (MAU)</div>
+            <div id="statMau" class="font-extrabold text-xl text-emerald-400 mt-1">0</div>
+          </div>
+          <div class="glass-input p-3 rounded-2xl">
+            <div class="text-slate-400" data-i18n="total_calls">Jami video suhbatlar</div>
+            <div id="statTotalCalls" class="font-extrabold text-xl text-amber-400 mt-1">0</div>
+          </div>
+        </div>
+
+        <!-- Total Duration Badge -->
+        <div class="glass-input p-3 rounded-2xl flex items-center justify-between text-xs">
+          <span class="text-slate-400" data-i18n="call_duration">Umumiy davomiylik:</span>
+          <span id="statCallDuration" class="font-extrabold text-cyan-300">0 min</span>
+        </div>
+
+        <!-- Ratio Breakdown -->
+        <div class="space-y-3 pt-2">
+          <!-- Gender ratio bar -->
+          <div>
+            <div class="flex justify-between text-[11px] font-semibold mb-1">
+              <span id="genderMalePct" class="text-cyan-400">50% Male</span>
+              <span id="genderFemalePct" class="text-pink-400">50% Female</span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-pink-500/30 overflow-hidden">
+              <div id="genderBarMale" class="h-full bg-cyan-400 rounded-full" style="width: 50%"></div>
+            </div>
+          </div>
+
+          <!-- Language ratio bar -->
+          <div>
+            <div class="flex justify-between text-[11px] font-semibold mb-1">
+              <span id="langUzPct" class="text-emerald-400">50% UZ</span>
+              <span id="langRuPct" class="text-purple-400">50% RU</span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-purple-500/30 overflow-hidden">
+              <div id="langBarUz" class="h-full bg-emerald-400 rounded-full" style="width: 50%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sponsor Channels Guard Management -->
+        <div class="border-t border-slate-800 pt-4">
+          <h3 class="text-xs font-bold text-amber-400 mb-2" data-i18n="sponsor_section">
+            Majburiy Obuna Kanallari (Guard)
+          </h3>
+          <div class="space-y-2 mb-3">
+            <input id="sponsorIdInput" type="text" placeholder="@mychannel" class="w-full glass-input px-3 py-2 rounded-xl text-xs">
+            <input id="sponsorTitleInput" type="text" placeholder="Kanal Nomi" class="w-full glass-input px-3 py-2 rounded-xl text-xs">
+            <input id="sponsorLinkInput" type="text" placeholder="https://t.me/mychannel" class="w-full glass-input px-3 py-2 rounded-xl text-xs">
+            <button onclick="adminDashboard.addSponsor()" class="w-full py-2 bg-amber-500/20 text-amber-300 font-bold rounded-xl text-xs hover:bg-amber-500/30">
+              ➕ Kanal Qo'shish
+            </button>
+          </div>
+          <div id="sponsorListContainer"></div>
+        </div>
+
+        <!-- Broadcasting Section -->
+        <div class="border-t border-slate-800 pt-4">
+          <h3 class="text-xs font-bold text-purple-400 mb-2" data-i18n="broadcast_section">
+            Ommaviy Xabar Yuborish (Broadcasting)
+          </h3>
+          <div class="space-y-2 mb-3">
+            <textarea id="broadcastTextInput" rows="2" placeholder="Xabar matni (Markdown)..." class="w-full glass-input px-3 py-2 rounded-xl text-xs"></textarea>
+            <input id="broadcastPhotoInput" type="text" placeholder="Rasm URL (Ixtiyoriy)..." class="w-full glass-input px-3 py-2 rounded-xl text-xs">
+            <input id="broadcastVoiceInput" type="text" placeholder="Audio URL (Ixtiyoriy)..." class="w-full glass-input px-3 py-2 rounded-xl text-xs">
+            <button id="sendBroadcastBtn" onclick="adminDashboard.sendBroadcast()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-cyan-500 font-bold rounded-2xl text-xs">
+              🚀 Barchaga Yuborish
+            </button>
+          </div>
+          
+          <h4 class="text-[11px] font-bold text-slate-400 mb-2" data-i18n="broadcast_history">Yuborilgan Xabarlar Tarixi</h4>
+          <div id="broadcastHistoryContainer"></div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="glass-panel sticky bottom-0 z-40 border-t border-slate-800 px-6 py-2 flex items-center justify-around max-w-4xl mx-auto w-full">
+    <button id="tabBtnChat" onclick="switchTab('chat')" class="tab-btn flex flex-col items-center text-xs font-bold text-purple-400 border-t-2 border-purple-400 pt-1">
+      <i class="fas fa-video text-base mb-0.5"></i>
+      <span data-i18n="tab_chat">Muloqot</span>
+    </button>
+    
+    <button id="tabBtnProfile" onclick="switchTab('profile')" class="tab-btn flex flex-col items-center text-xs font-bold text-slate-400 pt-1">
+      <i class="fas fa-user-circle text-base mb-0.5"></i>
+      <span data-i18n="tab_profile">Profil</span>
+    </button>
+
+    <!-- Admin tab button (Hidden by default, shown only for Admin tgIds) -->
+    <button id="tabBtnAdmin" onclick="switchTab('admin')" class="tab-btn flex flex-col items-center text-xs font-bold text-slate-400 pt-1 hidden">
+      <i class="fas fa-chart-line text-base mb-0.5"></i>
+      <span data-i18n="tab_admin">Admin</span>
+    </button>
+  </nav>
+
+  <!-- Application Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/webrtc.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/socket.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

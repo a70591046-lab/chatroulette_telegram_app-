@@ -1,0 +1,278 @@
+const matchmaking = require('./matchmaking');
+const db = require('../db/database');
+
+module.exports = function setupWebRTCSignaling(io) {
+  const socketCallStartTime = new Map(); // socketId -> startTime
+
+  io.on('connection', (socket) => {
+    console.log(`[Socket] Connected: ${socket.id}`);
+
+    // Join 1-on-1 Matchmaking Queue
+    socket.on('start-search', (data) => {
+      console.log(`[Socket] ${socket.id} started search with data:`, data);
+      const { tgId, profile } = data;
+      if (!tgId) {
+        console.log(`[Socket] ${socket.id} no tgId provided`);
+        return;
+      }
+
+      db.recordActivity(tgId);
+      
+      const result = matchmaking.addToQueue(socket.id, tgId, profile);
+      console.log(`[Socket] ${socket.id} matchmaking result:`, result);
+
+      if (result.matched) {
+        const peerSocketId = result.peerSocketId;
+        const now = Date.now();
+        socketCallStartTime.set(socket.id, now);
+        socketCallStartTime.set(peerSocketId, now);
+
+        const myProfile = db.getUser(tgId) || profile;
+        const peerSocket = io.sockets.sockets.get(peerSocketId);
+        const peerTgId = peerSocket ? peerSocket.handshake.query.tgId : null;
+        const peerProfile = peerTgId ? db.getUser(peerTgId) : null;
+
+        socket.emit('match-found', {
+          peerSocketId,
+          isInitiator: true,
+          peerProfile: peerProfile || { firstName: 'Suhbatdosh', age: 20, hobbies: [] }
+        });
+
+        io.to(peerSocketId).emit('match-found', {
+          peerSocketId: socket.id,
+          isInitiator: false,
+          peerProfile: myProfile
+        });
+      } else {
+        socket.emit('searching', { status: 'looking_for_peer' });
+      }
+    });
+
+    // Join Group Video Chat Lounge
+    socket.on('start-group-search', (data) => {
+      const { tgId, profile } = data;
+      if (!tgId) return;
+
+      db.recordActivity(tgId);
+      const res = matchmaking.joinGroupRoom(socket.id, tgId, profile);
+
+      socket.join(res.roomId);
+      socket.emit('group-joined', {
+        roomId: res.roomId,
+        existingMembers: res.members,
+        myProfile: db.getUser(tgId) || profile
+      });
+
+      socket.to(res.roomId).emit('group-peer-joined', {
+        peerSocketId: socket.id,
+        peerProfile: db.getUser(tgId) || profile
+      });
+    });
+
+    // Real-time Mute/Unmute Mic Signal
+    socket.on('send-mic-toggle', (data) => {
+      const peerSocketId = matchmaking.getPeer(socket.id);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit('peer-mic-toggle', { fromSocketId: socket.id, isMuted: data.isMuted });
+      }
+      const roomId = matchmaking.socketGroupRoom.get(socket.id);
+      if (roomId) {
+        io.to(roomId).emit('peer-mic-toggle', { fromSocketId: socket.id, isMuted: data.isMuted });
+      }
+    });
+
+    // Real-time Camera Toggle Signal
+    socket.on('send-cam-toggle', (data) => {
+      const peerSocketId = matchmaking.getPeer(socket.id);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit('peer-cam-toggle', { fromSocketId: socket.id, isOff: data.isOff });
+      }
+      const roomId = matchmaking.socketGroupRoom.get(socket.id);
+      if (roomId) {
+        io.to(roomId).emit('peer-cam-toggle', { fromSocketId: socket.id, isOff: data.isOff });
+      }
+    });
+
+    // Group Signaling: Mesh Offer/Answer/ICE
+    socket.on('group-offer', (data) => {
+      io.to(data.to).emit('group-offer', {
+        sdp: data.sdp,
+        from: socket.id
+      });
+    });
+
+    socket.on('group-answer', (data) => {
+      io.to(data.to).emit('group-answer', {
+        sdp: data.sdp,
+        from: socket.id
+      });
+    });
+
+    socket.on('group-ice-candidate', (data) => {
+      io.to(data.to).emit('group-ice-candidate', {
+        candidate: data.candidate,
+        from: socket.id
+      });
+    });
+
+    // Leave Chat
+    socket.on('leave-chat', () => {
+      handleCallEnd(socket.id);
+      const groupRes = matchmaking.leaveGroupRoom(socket.id);
+      if (groupRes) {
+        socket.leave(groupRes.roomId);
+        io.to(groupRes.roomId).emit('group-peer-left', { peerSocketId: socket.id });
+      }
+
+      const peerSocketId = matchmaking.endCall(socket.id);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit('peer-left', { reason: 'left' });
+      }
+      socket.emit('chat-left');
+    });
+
+    // Cancel Search
+    socket.on('cancel-search', () => {
+      matchmaking.removeFromQueue(socket.id);
+      matchmaking.leaveGroupRoom(socket.id);
+      socket.emit('search-cancelled');
+    });
+
+    // 1-on-1 WebRTC Offer
+    socket.on('webrtc-offer', (data) => {
+      const peerSocketId = matchmaking.getPeer(socket.id);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit('webrtc-offer', {
+          sdp: data.sdp,
+          from: socket.id
+        });
+      }
+    });
+
+    socket.on('webrtc-answer', (data) => {
+      const peerSocketId = matchmaking.getPeer(socket.id);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit('webrtc-answer', {
+          sdp: data.sdp,
+          from: socket.id
+        });
+      }
+    });
+
+    socket.on('ice-candidate', (data) => {
+      const peerSocketId = matchmaking.getPeer(socket.id);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit('ice-candidate', {
+          candidate: data.candidate,
+          from: socket.id
+        });
+      }
+    });
+
+    // Interactive Actions
+    socket.on('send-like', (data) => {
+      const peerSocketId = matchmaking.getPeer(socket.id);
+      const { fromTgId, toTgId } = data;
+      if (fromTgId && toTgId) db.addLike(fromTgId, toTgId);
+      if (peerSocketId) io.to(peerSocketId).emit('received-like', { fromSocket: socket.id });
+    });
+
+    socket.on('send-follow', (data) => {
+      const peerSocketId = matchmaking.getPeer(socket.id);
+      const { fromTgId, toTgId } = data;
+      if (fromTgId && toTgId) db.addFollow(fromTgId, toTgId);
+      if (peerSocketId) io.to(peerSocketId).emit('received-follow', { fromSocket: socket.id });
+    });
+
+    socket.on('send-friend-request', (data) => {
+      const peerSocketId = matchmaking.getPeer(socket.id);
+      const { fromTgId, toTgId } = data;
+      if (fromTgId && toTgId) db.addFriendRequest(fromTgId, toTgId);
+      if (peerSocketId) io.to(peerSocketId).emit('received-friend-request', { fromSocket: socket.id });
+    });
+
+    // Live Chat
+    socket.on('send-chat-message', (data) => {
+      const peerSocketId = matchmaking.getPeer(socket.id);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit('chat-message', {
+          text: data.text,
+          from: socket.id,
+          timestamp: Date.now()
+        });
+      }
+    });
+
+    // Skip Peer
+    socket.on('skip-peer', (data) => {
+      const { tgId, profile } = data;
+      handleCallEnd(socket.id);
+
+      const peerSocketId = matchmaking.endCall(socket.id);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit('peer-left', { reason: 'skipped' });
+      }
+
+      if (tgId && profile) {
+        const result = matchmaking.addToQueue(socket.id, tgId, profile);
+        if (result.matched) {
+          const newPeerSocketId = result.peerSocketId;
+          const now = Date.now();
+          socketCallStartTime.set(socket.id, now);
+          socketCallStartTime.set(newPeerSocketId, now);
+
+          const myProfile = db.getUser(tgId) || profile;
+          const newPeerSocket = io.sockets.sockets.get(newPeerSocketId);
+          const newPeerTgId = newPeerSocket ? newPeerSocket.handshake.query.tgId : null;
+          const newPeerProfile = newPeerTgId ? db.getUser(newPeerTgId) : null;
+
+          socket.emit('match-found', {
+            peerSocketId: newPeerSocketId,
+            isInitiator: true,
+            peerProfile: newPeerProfile || { firstName: 'Suhbatdosh', age: 20, hobbies: [] }
+          });
+
+          io.to(newPeerSocketId).emit('match-found', {
+            peerSocketId: socket.id,
+            isInitiator: false,
+            peerProfile: myProfile
+          });
+        } else {
+          socket.emit('searching', { status: 'looking_for_peer' });
+        }
+      }
+    });
+
+    // End Call
+    socket.on('end-call', () => {
+      handleCallEnd(socket.id);
+      const peerSocketId = matchmaking.endCall(socket.id);
+      if (peerSocketId) {
+        handleCallEnd(peerSocketId);
+        io.to(peerSocketId).emit('peer-left', { reason: 'ended' });
+      }
+    });
+
+    // Disconnect
+    socket.on('disconnect', () => {
+      console.log(`[Socket] Disconnected: ${socket.id}`);
+      handleCallEnd(socket.id);
+      matchmaking.leaveGroupRoom(socket.id);
+      const peerSocketId = matchmaking.endCall(socket.id);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit('peer-left', { reason: 'disconnected' });
+      }
+    });
+
+    function handleCallEnd(sId) {
+      if (socketCallStartTime.has(sId)) {
+        const start = socketCallStartTime.get(sId);
+        const durationSec = Math.floor((Date.now() - start) / 1000);
+        if (durationSec > 1) {
+          db.recordCall(durationSec);
+        }
+        socketCallStartTime.delete(sId);
+      }
+    }
+  });
+};

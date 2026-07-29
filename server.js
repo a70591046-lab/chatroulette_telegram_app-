@@ -1,0 +1,170 @@
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const cors = require('cors');
+const { Server } = require('socket.io');
+
+const config = require('./config');
+const db = require('./db/database');
+const { initBot } = require('./bot/bot');
+const setupWebRTCSignaling = require('./services/webrtcSignaling');
+const broadcastService = require('./services/broadcastService');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Middleware to set bypass headers for tunnels (No IP prompts)
+app.use((req, res, next) => {
+  res.setHeader('Bypass-Tunnel-Reminder', 'true');
+  res.setHeader('Bypass-Tunnel-Warning', 'true');
+  res.setHeader('ngrok-skip-browser-warning', 'true');
+  next();
+});
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Bypass localtunnel IP page: set cookie then redirect to app
+app.get('/bypass', (req, res) => {
+  res.setHeader('Set-Cookie', [
+    'bypass-tunnel-reminder=1; Path=/; SameSite=None; Secure',
+    'localtunnel=true; Path=/; SameSite=None; Secure'
+  ]);
+  res.redirect('/');
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Setup Socket.io Signaling
+setupWebRTCSignaling(io);
+
+// API Endpoints
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/user/:tgId', (req, res) => {
+  const { tgId } = req.params;
+  const user = db.getUser(tgId);
+  if (user) {
+    res.json({ success: true, user });
+  } else {
+    res.json({ success: false, message: 'User not found' });
+  }
+});
+
+app.post('/api/user/update', (req, res) => {
+  const { tgId, profile } = req.body;
+  if (!tgId || !profile) {
+    return res.status(400).json({ success: false, message: 'Missing parameters' });
+  }
+  const updated = db.saveUser(tgId, profile);
+  res.json({ success: true, user: updated });
+});
+
+app.get('/api/admin/stats', (req, res) => {
+  const analytics = db.getAnalytics();
+  res.json({ success: true, stats: analytics });
+});
+
+app.get('/api/admin/sponsors', (req, res) => {
+  const sponsors = db.getSponsors();
+  res.json({ success: true, sponsors });
+});
+
+app.post('/api/admin/sponsors/add', (req, res) => {
+  const { channelId, title, link } = req.body;
+  if (!channelId) return res.status(400).json({ success: false, message: 'Channel ID required' });
+
+  const sponsors = db.addSponsor(channelId, title, link);
+  res.json({ success: true, sponsors });
+});
+
+app.post('/api/admin/sponsors/remove', (req, res) => {
+  const { channelId } = req.body;
+  if (!channelId) return res.status(400).json({ success: false, message: 'Channel ID required' });
+
+  const sponsors = db.removeSponsor(channelId);
+  res.json({ success: true, sponsors });
+});
+
+app.post('/api/admin/broadcast', async (req, res) => {
+  const { text, photoUrl, voiceUrl } = req.body;
+  if (!text && !photoUrl && !voiceUrl) {
+    return res.status(400).json({ success: false, message: 'Content required for broadcast' });
+  }
+
+  if (!botInstance) {
+    return res.status(500).json({ success: false, message: 'Bot instance unavailable' });
+  }
+
+  try {
+    const result = await broadcastService.sendBroadcast(botInstance, { text, photoUrl, voiceUrl });
+    res.json({ success: true, result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/admin/broadcasts', (req, res) => {
+  res.json({ success: true, broadcasts: db.data.broadcasts || [] });
+});
+
+app.post('/api/admin/broadcasts/edit', (req, res) => {
+  const { id, text } = req.body;
+  db.updateBroadcastLog(id, { text });
+  res.json({ success: true, broadcasts: db.data.broadcasts });
+});
+
+app.post('/api/admin/broadcasts/delete', (req, res) => {
+  const { id } = req.body;
+  db.deleteBroadcastLog(id);
+  res.json({ success: true, broadcasts: db.data.broadcasts });
+});
+
+let botInstance = null;
+
+server.listen(config.PORT, async () => {
+  console.log(`=================================================`);
+  console.log(`🚀 Chatroulette Server listening on port ${config.PORT}`);
+  console.log(`🔗 Local WebApp URL: ${config.WEBAPP_URL}`);
+
+  // Initialize localtunnel (fast, no IP prompt with bypass header)
+  try {
+    const localtunnel = require('localtunnel');
+    const tunnel = await localtunnel({
+      port: config.PORT,
+      subdomain: 'chatroulette-uz-app'
+    });
+    config.WEBAPP_URL = tunnel.url;
+    console.log(`🌍 HTTPS TUNNEL URL: ${tunnel.url}`);
+    tunnel.on('close', () => console.log('Tunnel closed'));
+    tunnel.on('error', (err) => console.error('Tunnel error:', err.message));
+  } catch (e) {
+    console.log('Tunnel init error:', e.message);
+  }
+
+  console.log(`=================================================`);
+
+  // Launch Bot after URL is determined
+  try {
+    botInstance = initBot();
+    botInstance.launch().then(() => {
+      console.log('🤖 Telegram Bot launched successfully!');
+    }).catch((err) => {
+      console.error('⚠️ Telegram Bot launch error:', err.message);
+    });
+  } catch (err) {
+    console.error('⚠️ Telegram Bot init exception:', err.message);
+  }
+});
+
+process.once('SIGINT', () => botInstance && botInstance.stop('SIGINT'));
+process.once('SIGTERM', () => botInstance && botInstance.stop('SIGTERM'));
