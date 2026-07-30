@@ -79,14 +79,30 @@ function initBot() {
       if (!config.ADMIN_IDS.includes(tgId)) return;
       
       const stats = db.getAnalytics();
-      const msg = `📊 **Platforma Statistikasi:**\n\n` +
+      let msg = `📊 **Platforma Statistikasi:**\n\n` +
                   `👥 Jami foydalanuvchilar: ${stats.totalUsers}\n` +
                   `📈 Kunlik faol (DAU): ${stats.dau}\n` +
                   `📅 Oylik faol (MAU): ${stats.mau}\n` +
                   `📞 Jami video suhbatlar: ${stats.totalCalls}\n` +
                   `⏱ Umumiy davomiylik: ${Math.floor(stats.totalDurationSeconds / 60)} daqiqa\n\n` +
                   `👨 Erkaklar: ${stats.genderRatio.male} | 👩 Ayollar: ${stats.genderRatio.female}\n` +
-                  `🇺🇿 UZ: ${stats.langRatio.uz} | 🇷🇺 RU: ${stats.langRatio.ru}`;
+                  `🇺🇿 UZ: ${stats.langRatio.uz} | 🇷🇺 RU: ${stats.langRatio.ru}\n\n` +
+                  `📋 **Foydalanuvchilar:**\n`;
+                  
+      const users = db.data.users;
+      let count = 1;
+      for (const id in users) {
+        const u = users[id];
+        const username = u.username ? `@${u.username}` : 'Yo\'q';
+        const gender = u.gender === 'female' ? 'Ayol' : 'Erkak';
+        const line = `${count}. ${u.tgId} | ${u.firstName} | ${username} | ${gender} | ${u.age}\n`;
+        if (msg.length + line.length > 4000) {
+          msg += `...va yana boshqalar. Toliq ro'yxatni olish uchun pastdagi TXT tugmasini bosing.`;
+          break;
+        }
+        msg += line;
+        count++;
+      }
                   
       await ctx.answerCbQuery();
       await ctx.reply(msg, { parse_mode: 'Markdown' });
