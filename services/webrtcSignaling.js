@@ -271,6 +271,8 @@ function setupWebRTCSignaling(io) {
       const fromTgId = socket.handshake.query.tgId;
       const giftType  = data.giftType;
       const mode      = data.mode || '1on1';
+      const fromUser  = db.getUser(fromTgId);
+      const fromName  = fromUser ? fromUser.firstName : 'Foydalanuvchi';
 
       if (mode === 'group') {
         // Broadcast to everyone in the same group room
@@ -279,7 +281,7 @@ function setupWebRTCSignaling(io) {
           const members = matchmaking.getGroupRoomMembers(roomId);
           members.forEach(memberId => {
             if (memberId !== socket.id) {
-              io.to(memberId).emit('received-gift', { giftType, fromTgId, mode: 'group' });
+              io.to(memberId).emit('received-gift', { giftType, fromTgId, fromName, mode: 'group' });
             }
           });
           db.logGift({ fromTgId, toTgId: 'group:' + roomId, giftType, mode: 'group' });
@@ -290,7 +292,7 @@ function setupWebRTCSignaling(io) {
         if (targetSocketId) {
           const targetSocket = io.sockets.sockets.get(targetSocketId);
           const toTgId = targetSocket ? targetSocket.handshake.query.tgId : data.toTgId;
-          io.to(targetSocketId).emit('received-gift', { giftType, fromTgId, mode: '1on1' });
+          io.to(targetSocketId).emit('received-gift', { giftType, fromTgId, fromName, mode: '1on1' });
           db.logGift({ fromTgId, toTgId, giftType, mode: '1on1' });
         }
       }

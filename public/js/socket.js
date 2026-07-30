@@ -161,6 +161,8 @@ function initSocketConnection(tgId, webrtcManager) {
       ring:     { emoji: '💍', label: 'Uzuk'    },
     };
     const g = gifts[data.giftType] || { emoji: '🎁', label: 'Sovg\'a' };
+    const sender = data.fromName || 'Suhbatdosh';
+    const mainTitle = data.mode === 'group' ? `${sender} guruhga sovg'a yubordi!` : `${sender} sizga sovg'a yubordi!`;
 
     // Show received banner
     const banner = document.createElement('div');
@@ -168,7 +170,7 @@ function initSocketConnection(tgId, webrtcManager) {
     banner.innerHTML = `
       <div class="g-emoji">${g.emoji}</div>
       <div>
-        <div class="g-text">Suhbatdosh sovg'a yubordi!</div>
+        <div class="g-text">${mainTitle}</div>
         <div class="g-sub">${g.label} ${g.emoji}</div>
       </div>`;
     document.body.appendChild(banner);
