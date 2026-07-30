@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Chatroulette</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #050914; }
+
+    .glass {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 1rem;
+      transition: all 0.25s;
+    }
+    .stat-card:hover { border-color: rgba(139,92,246,0.4); transform: translateY(-2px); }
+
+    .table-row:hover { background: rgba(139,92,246,0.08); }
+
+    .badge-online  { background:#10b98133; color:#10b981; border:1px solid #10b98155; }
+    .badge-offline { background:#64748b33; color:#94a3b8; border:1px solid #64748b55; }
+    .badge-banned  { background:#ef444433; color:#ef4444; border:1px solid #ef444455; }
+    .badge-admin   { background:#f59e0b33; color:#f59e0b; border:1px solid #f59e0b55; }
+
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:#0a0f1e; }
+    ::-webkit-scrollbar-thumb { background:#374151; border-radius:4px; }
+
+    .glow-purple { box-shadow: 0 0 24px rgba(139,92,246,0.35); }
+    .glow-cyan   { box-shadow: 0 0 24px rgba(6,182,212,0.3); }
+    .glow-green  { box-shadow: 0 0 24px rgba(16,185,129,0.3); }
+    .glow-red    { box-shadow: 0 0 24px rgba(239,68,68,0.3); }
+
+    .nav-item { transition: all 0.2s; border-left: 3px solid transparent; }
+    .nav-item.active, .nav-item:hover { background: rgba(139,92,246,0.12); border-left-color: #8b5cf6; }
+
+    #loginScreen {
+      background: radial-gradient(ellipse at 50% 20%, rgba(139,92,246,0.15) 0%, transparent 60%), #050914;
+    }
+
+    .pulse-dot { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    input, textarea, select {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #f1f5f9;
+      border-radius: 0.75rem;
+      padding: 0.6rem 1rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #8b5cf6; }
+    input::placeholder, textarea::placeholder { color: #64748b; }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen">
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:flex!important">
+  <div class="glass rounded-3xl p-8 w-full max-w-sm text-center">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-3xl">⚡</div>
+    <h1 class="text-2xl font-extrabold mb-1 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">Admin Panel</h1>
+    <p class="text-slate-400 text-sm mb-6">Chatroulette boshqaruv paneli</p>
+    <div class="text-left mb-4">
+      <label class="text-xs text-slate-400 mb-1 block">Telegram ID (Admin)</label>
+      <input type="text" id="adminTokenInput" placeholder="7713174177" autocomplete="off">
+    </div>
+    <button onclick="doLogin()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 font-bold text-sm hover:brightness-110 active:scale-95 transition glow-purple">
+      <i class="fas fa-sign-in-alt mr-2"></i>Kirish
+    </button>
+    <p id="loginError" class="text-red-400 text-xs mt-3 hidden">❌ Ruxsat yo'q yoki ID noto'g'ri!</p>
+  </div>
+</div>
+
+<!-- MAIN ADMIN LAYOUT -->
+<div id="adminApp" class="hidden min-h-screen flex">
+
+  <!-- Sidebar -->
+  <aside class="w-64 flex-shrink-0 glass border-r border-white/5 flex flex-col p-4 gap-1 min-h-screen sticky top-0">
+    <div class="flex items-center gap-3 mb-6 px-2 pt-2">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center font-black text-lg">⚡</div>
+      <div>
+        <div class="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 text-sm leading-tight">CHATROULETTE</div>
+        <div class="text-xs text-slate-400">Admin Panel</div>
+      </div>
+    </div>
+
+    <nav class="flex-1 flex flex-col gap-1">
+      <button onclick="showTab('dashboard')" class="nav-item active text-left px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-3" id="nav-dashboard">
+        <i class="fas fa-chart-line w-4 text-purple-400"></i> Dashboard
+      </button>
+      <button onclick="showTab('users')" class="nav-item text-left px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-3" id="nav-users">
+        <i class="fas fa-users w-4 text-cyan-400"></i> Foydalanuvchilar
+      </button>
+      <button onclick="showTab('banned')" class="nav-item text-left px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-3" id="nav-banned">
+        <i class="fas fa-ban w-4 text-red-400"></i> Bloklangan
+      </button>
+      <button onclick="showTab('broadcast')" class="nav-item text-left px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-3" id="nav-broadcast">
+        <i class="fas fa-bullhorn w-4 text-amber-400"></i> Xabar Tarqatish
+      </button>
+    </nav>
+
+    <div class="mt-auto pt-4 border-t border-white/5">
+      <div id="sidebarAdminId" class="text-xs text-slate-500 px-2 mb-2">ID: —</div>
+      <div class="flex items-center gap-2 px-2">
+        <span class="pulse-dot w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+        <span class="text-xs text-emerald-400 font-semibold">Online</span>
+        <span id="onlineCountBadge" class="ml-auto text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">0</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6 overflow-y-auto">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 id="pageTitle" class="text-2xl font-extrabold text-white">Dashboard</h2>
+        <p class="text-slate-400 text-sm mt-0.5" id="pageSubtitle">Platforma statistikasi va boshqaruv</p>
+      </div>
+      <button onclick="refreshData()" class="glass px-4 py-2 rounded-xl text-sm font-semibold text-slate-300 hover:text-white transition flex items-center gap-2">
+        <i class="fas fa-sync-alt" id="refreshIcon"></i> Yangilash
+      </button>
+    </div>
+
+    <!-- DASHBOARD TAB -->
+    <div id="tab-dashboard">
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Jami Foydalanuvchi</span>
+            <div class="w-9 h-9 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400"><i class="fas fa-users text-sm"></i></div>
+          </div>
+          <div id="s-total" class="text-3xl font-black text-white">—</div>
+          <div class="text-xs text-slate-500 mt-1">Ro'yxatdan o'tgan</div>
+        </div>
+
+        <div class="stat-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Online</span>
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400"><i class="fas fa-circle text-sm"></i></div>
+          </div>
+          <div id="s-online" class="text-3xl font-black text-emerald-400">—</div>
+          <div class="text-xs text-slate-500 mt-1">Hozir ulanganlar</div>
+        </div>
+
+        <div class="stat-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Jami Suhbat</span>
+            <div class="w-9 h-9 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400"><i class="fas fa-video text-sm"></i></div>
+          </div>
+          <div id="s-calls" class="text-3xl font-black text-cyan-400">—</div>
+          <div class="text-xs text-slate-500 mt-1">Video suhbatlar</div>
+        </div>
+
+        <div class="stat-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Bloklangan</span>
+            <div class="w-9 h-9 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400"><i class="fas fa-ban text-sm"></i></div>
+          </div>
+          <div id="s-banned" class="text-3xl font-black text-red-400">—</div>
+          <div class="text-xs text-slate-500 mt-1">Ban qilingan</div>
+        </div>
+
+        <div class="stat-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">DAU (Bugun)</span>
+            <div class="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400"><i class="fas fa-calendar-day text-sm"></i></div>
+          </div>
+          <div id="s-dau" class="text-3xl font-black text-amber-400">—</div>
+          <div class="text-xs text-slate-500 mt-1">Kunlik faol</div>
+        </div>
+
+        <div class="stat-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">MAU (30 kun)</span>
+            <div class="w-9 h-9 rounded-xl bg-pink-500/20 flex items-center justify-center text-pink-400"><i class="fas fa-calendar-alt text-sm"></i></div>
+          </div>
+          <div id="s-mau" class="text-3xl font-black text-pink-400">—</div>
+          <div class="text-xs text-slate-500 mt-1">Oylik faol</div>
+        </div>
+
+        <div class="stat-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Davomiylik</span>
+            <div class="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400"><i class="fas fa-clock text-sm"></i></div>
+          </div>
+          <div id="s-dur" class="text-3xl font-black text-indigo-400">—</div>
+          <div class="text-xs text-slate-500 mt-1">Jami daqiqa</div>
+        </div>
+
+        <div class="stat-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Erkak / Ayol</span>
+            <div class="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400"><i class="fas fa-venus-mars text-sm"></i></div>
+          </div>
+          <div id="s-gender" class="text-xl font-black text-blue-400">— / —</div>
+          <div class="text-xs text-slate-500 mt-1">Jins taqsimoti</div>
+        </div>
+      </div>
+
+      <!-- Recent Users Preview -->
+      <div class="glass rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-white">So'nggi Foydalanuvchilar</h3>
+          <button onclick="showTab('users')" class="text-xs text-purple-400 hover:text-purple-300">Hammasini ko'rish →</button>
+        </div>
+        <div id="recentUsersList" class="space-y-2"></div>
+      </div>
+    </div>
+
+    <!-- USERS TAB -->
+    <div id="tab-users" class="hidden">
+      <div class="glass rounded-2xl overflow-hidden">
+        <div class="p-4 border-b border-white/5 flex items-center gap-3">
+          <input type="text" id="userSearch" placeholder="🔍 Ism, ID yoki username..." class="max-w-xs" oninput="filterUsers()">
+          <select id="userFilter" onchange="filterUsers()" class="max-w-xs">
+            <option value="all">Barchasi</option>
+            <option value="online">Online</option>
+            <option value="banned">Bloklangan</option>
+            <option value="male">Erkaklar</option>
+            <option value="female">Ayollar</option>
+          </select>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/5 text-slate-400 text-xs uppercase">
+                <th class="text-left py-3 px-4">Foydalanuvchi</th>
+                <th class="text-left py-3 px-4">Telegram ID</th>
+                <th class="text-left py-3 px-4">Status</th>
+                <th class="text-left py-3 px-4">Jins</th>
+                <th class="text-left py-3 px-4">Til</th>
+                <th class="text-left py-3 px-4">Amallar</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+        <div id="usersCount" class="text-xs text-slate-500 px-4 py-3 border-t border-white/5"></div>
+      </div>
+    </div>
+
+    <!-- BANNED TAB -->
+    <div id="tab-banned" class="hidden">
+      <div class="glass rounded-2xl overflow-hidden">
+        <div class="p-4 border-b border-white/5">
+          <h3 class="font-bold text-red-400 flex items-center gap-2"><i class="fas fa-ban"></i> Bloklangan Foydalanuvchilar</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/5 text-slate-400 text-xs uppercase">
+                <th class="text-left py-3 px-4">Foydalanuvchi</th>
+                <th class="text-left py-3 px-4">Telegram ID</th>
+                <th class="text-left py-3 px-4">Amallar</th>
+              </tr>
+            </thead>
+            <tbody id="bannedTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROADCAST TAB -->
+    <div id="tab-broadcast" class="hidden">
+      <div class="glass rounded-2xl p-6 max-w-2xl">
+        <h3 class="font-bold text-amber-400 text-lg mb-4 flex items-center gap-2"><i class="fas fa-bullhorn"></i> Xabar Tarqatish (Broadcast)</h3>
+        <p class="text-sm text-slate-400 mb-4">Bu yerdan barcha foydalanuvchilarga Telegram orqali xabar jo'natishingiz mumkin.</p>
+        <textarea id="broadcastText" rows="5" placeholder="Xabar matnini kiriting...&#10;&#10;Masalan: 🎉 Yangi funksiya qo'shildi! Kirin va sinab ko'ring."></textarea>
+        <div class="flex items-center gap-3 mt-4">
+          <button onclick="sendBroadcast()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 font-bold text-sm hover:brightness-110 active:scale-95 transition flex items-center gap-2">
+            <i class="fas fa-paper-plane"></i> Yuborish
+          </button>
+          <span id="broadcastStatus" class="text-sm text-slate-400"></span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const API = 'https://web-production-65a7f.up.railway.app';
+  let adminToken = '';
+  let allUsers = [];
+
+  async function doLogin() {
+    const val = document.getElementById('adminTokenInput').value.trim();
+    if (!val) return;
+    
+    const btn = event.target;
+    btn.textContent = '⏳ Tekshirilmoqda...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`${API}/api/admin/stats?adminToken=${val}`);
+      if (res.status === 403) {
+        document.getElementById('loginError').classList.remove('hidden');
+        btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Kirish';
+        btn.disabled = false;
+        return;
+      }
+      adminToken = val;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminApp').classList.remove('hidden');
+      document.getElementById('sidebarAdminId').textContent = `ID: ${val}`;
+      loadDashboard();
+    } catch(e) {
+      document.getElementById('loginError').classList.remove('hidden');
+      document.getElementById('loginError').textContent = '❌ Server bilan bog\'lanishda xato!';
+      btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Kirish';
+      btn.disabled = false;
+    }
+  }
+
+  document.addEventListener('keypress', e => {
+    if (e.key === 'Enter' && !adminToken) doLogin();
+  });
+
+  function showTab(tab) {
+    ['dashboard','users','banned','broadcast'].forEach(t => {
+      document.getElementById(`tab-${t}`).classList.add('hidden');
+      document.getElementById(`nav-${t}`).classList.remove('active');
+    });
+    document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    document.getElementById(`nav-${tab}`).classList.add('active');
+    const titles = {
+      dashboard: ['Dashboard', 'Platforma statistikasi va boshqaruv'],
+      users: ['Foydalanuvchilar', 'Barcha ro\'yxatdan o\'tgan foydalanuvchilar'],
+      banned: ['Bloklangan', 'Platformadan ban qilingan foydalanuvchilar'],
+      broadcast: ['Xabar Tarqatish', 'Barcha foydalanuvchilarga xabar yuborish']
+    };
+    document.getElementById('pageTitle').textContent = titles[tab][0];
+    document.getElementById('pageSubtitle').textContent = titles[tab][1];
+    if (tab === 'users') loadUsers();
+    if (tab === 'banned') loadBanned();
+  }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(`${API}${path}`, {
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+      ...opts
+    });
+    return res.json();
+  }
+
+  async function loadDashboard() {
+    const [statsRes, usersRes] = await Promise.all([
+      api('/api/admin/stats'),
+      api('/api/admin/users')
+    ]);
+    if (statsRes.success) {
+      const s = statsRes.stats;
+      document.getElementById('s-total').textContent = s.totalUsers;
+      document.getElementById('s-online').textContent = s.onlineUsers;
+      document.getElementById('s-calls').textContent = s.totalCalls;
+      document.getElementById('s-banned').textContent = s.bannedCount;
+      document.getElementById('s-dau').textContent = s.dau;
+      document.getElementById('s-mau').textContent = s.mau;
+      document.getElementById('s-dur').textContent = s.totalDurationMin + ' daq';
+      document.getElementById('s-gender').textContent = `${s.males} / ${s.females}`;
+      document.getElementById('onlineCountBadge').textContent = s.onlineUsers;
+    }
+    if (usersRes.success) {
+      allUsers = usersRes.users;
+      const recent = [...usersRes.users].reverse().slice(0, 6);
+      document.getElementById('recentUsersList').innerHTML = recent.map(u => userRow(u, true)).join('');
+    }
+  }
+
+  async function loadUsers() {
+    const res = await api('/api/admin/users');
+    if (res.success) {
+      allUsers = res.users;
+      renderUsers(allUsers);
+    }
+  }
+
+  async function loadBanned() {
+    const res = await api('/api/admin/users');
+    if (res.success) {
+      const banned = res.users.filter(u => u.isBanned);
+      document.getElementById('bannedTableBody').innerHTML = banned.length 
+        ? banned.map(u => `
+            <tr class="table-row border-b border-white/5">
+              <td class="py-3 px-4">
+                <div class="font-semibold text-white">${u.firstName || 'Noma\'lum'}</div>
+                <div class="text-xs text-slate-500">@${u.username || '—'}</div>
+              </td>
+              <td class="py-3 px-4 font-mono text-slate-400">${u.tgId}</td>
+              <td class="py-3 px-4">
+                <button onclick="unbanUser('${u.tgId}')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold hover:bg-emerald-500/40 transition">
+                  <i class="fas fa-unlock mr-1"></i>Blokdan chiqarish
+                </button>
+              </td>
+            </tr>`).join('')
+        : '<tr><td colspan="3" class="py-8 text-center text-slate-500">Bloklangan foydalanuvchi yo\'q</td></tr>';
+    }
+  }
+
+  function userRow(u, compact = false) {
+    const statusBadge = u.isBanned 
+      ? `<span class="badge-banned text-[10px] font-bold px-2 py-0.5 rounded-full">BAN</span>`
+      : u.isOnline 
+        ? `<span class="badge-online text-[10px] font-bold px-2 py-0.5 rounded-full">● Online</span>`
+        : `<span class="badge-offline text-[10px] font-bold px-2 py-0.5 rounded-full">Offline</span>`;
+
+    if (compact) return `
+      <div class="flex items-center justify-between py-2 px-2 rounded-xl hover:bg-white/5 transition">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center font-bold text-xs">${(u.firstName || '?')[0]}</div>
+          <div>
+            <div class="font-semibold text-sm text-white">${u.firstName || 'Noma\'lum'} <span class="text-slate-500">@${u.username || '—'}</span></div>
+            <div class="text-xs text-slate-500 font-mono">ID: ${u.tgId}</div>
+          </div>
+        </div>
+        ${statusBadge}
+      </div>`;
+
+    return `
+      <tr class="table-row border-b border-white/5">
+        <td class="py-3 px-4">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center font-bold text-xs flex-shrink-0">${(u.firstName || '?')[0]}</div>
+            <div>
+              <div class="font-semibold text-white">${u.firstName || 'Noma\'lum'}</div>
+              <div class="text-xs text-slate-500">@${u.username || '—'}</div>
+            </div>
+          </div>
+        </td>
+        <td class="py-3 px-4 font-mono text-slate-400 text-xs">${u.tgId}</td>
+        <td class="py-3 px-4">${statusBadge}</td>
+        <td class="py-3 px-4 text-slate-300">${u.gender === 'female' ? '👩 Ayol' : '👨 Erkak'}</td>
+        <td class="py-3 px-4 text-slate-300">${u.lang === 'ru' ? '🇷🇺 RU' : '🇺🇿 UZ'}</td>
+        <td class="py-3 px-4">
+          ${u.isBanned 
+            ? `<button onclick="unbanUser('${u.tgId}')" class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold hover:bg-emerald-500/40 transition">Unban</button>`
+            : `<button onclick="banUser('${u.tgId}')" class="px-3 py-1 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold hover:bg-red-500/40 transition"><i class="fas fa-ban mr-1"></i>Ban</button>`
+          }
+        </td>
+      </tr>`;
+  }
+
+  function renderUsers(users) {
+    document.getElementById('usersTableBody').innerHTML = users.length
+      ? users.map(u => userRow(u)).join('')
+      : '<tr><td colspan="6" class="py-8 text-center text-slate-500">Foydalanuvchilar topilmadi</td></tr>';
+    document.getElementById('usersCount').textContent = `Jami: ${users.length} ta foydalanuvchi`;
+  }
+
+  function filterUsers() {
+    const search = document.getElementById('userSearch').value.toLowerCase();
+    const filter = document.getElementById('userFilter').value;
+    let filtered = allUsers.filter(u => {
+      const matchSearch = !search 
+        || (u.firstName || '').toLowerCase().includes(search)
+        || (u.username || '').toLowerCase().includes(search)
+        || String(u.tgId).includes(search);
+      const matchFilter = filter === 'all' 
+        || (filter === 'online' && u.isOnline)
+        || (filter === 'banned' && u.isBanned)
+        || (filter === 'male' && u.gender === 'male')
+        || (filter === 'female' && u.gender === 'female');
+      return matchSearch && matchFilter;
+    });
+    renderUsers(filtered);
+  }
+
+  async function banUser(tgId) {
+    if (!confirm(`${tgId} ni bloklaysizmi?`)) return;
+    const res = await api('/api/admin/ban', { method: 'POST', body: JSON.stringify({ tgId }) });
+    if (res.success) {
+      showNotif(`✅ ${tgId} bloklandi!`, 'green');
+      loadUsers();
+    }
+  }
+
+  async function unbanUser(tgId) {
+    if (!confirm(`${tgId} ni blokdan chiqarasizmi?`)) return;
+    const res = await api('/api/admin/unban', { method: 'POST', body: JSON.stringify({ tgId }) });
+    if (res.success) {
+      showNotif(`✅ ${tgId} blokdan chiqarildi!`, 'green');
+      loadUsers();
+      loadBanned();
+    }
+  }
+
+  async function sendBroadcast() {
+    const text = document.getElementById('broadcastText').value.trim();
+    if (!text) return;
+    const statusEl = document.getElementById('broadcastStatus');
+    statusEl.textContent = '⏳ Yuborilmoqda...';
+    const res = await api('/api/admin/broadcast', { method: 'POST', body: JSON.stringify({ text }) });
+    if (res.success) {
+      statusEl.textContent = `✅ ${res.sent} ta foydalanuvchiga yuborildi!`;
+      statusEl.className = 'text-sm text-emerald-400';
+      document.getElementById('broadcastText').value = '';
+    } else {
+      statusEl.textContent = '❌ Xatolik yuz berdi!';
+      statusEl.className = 'text-sm text-red-400';
+    }
+  }
+
+  async function refreshData() {
+    const icon = document.getElementById('refreshIcon');
+    icon.className = 'fas fa-sync-alt fa-spin';
+    await loadDashboard();
+    setTimeout(() => icon.className = 'fas fa-sync-alt', 800);
+  }
+
+  function showNotif(msg, color = 'purple') {
+    const colors = { green: 'bg-emerald-500', red: 'bg-red-500', purple: 'bg-purple-500' };
+    const el = document.createElement('div');
+    el.className = `fixed top-4 right-4 z-50 ${colors[color]} text-white px-4 py-3 rounded-xl font-semibold text-sm shadow-lg`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+
+  // Auto-refresh every 30s
+  setInterval(() => { if (adminToken) loadDashboard(); }, 30000);
+</script>
+</body>
+</html>

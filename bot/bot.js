@@ -412,7 +412,13 @@ async function sendToAdmins(msg, extra) {
   }
 }
 
+function getBotInstance() {
+  return botInstance;
+}
+
 module.exports = {
   initBot,
-  sendToAdmins
+  sendToAdmins,
+  getBotInstance
 };
+
