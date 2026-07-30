@@ -268,13 +268,31 @@ function setupWebRTCSignaling(io) {
 
     // Send Gift
     socket.on('send-gift', (data) => {
-      // Try by peerSocketId first (most reliable), fallback to matchmaking peer lookup
-      let targetSocketId = data.peerSocketId || matchmaking.getPeer(socket.id);
-      if (targetSocketId) {
-        io.to(targetSocketId).emit('received-gift', {
-          giftType: data.giftType,
-          fromTgId: data.fromTgId
-        });
+      const fromTgId = socket.handshake.query.tgId;
+      const giftType  = data.giftType;
+      const mode      = data.mode || '1on1';
+
+      if (mode === 'group') {
+        // Broadcast to everyone in the same group room
+        const roomId = matchmaking.getUserGroupRoom(socket.id);
+        if (roomId) {
+          const members = matchmaking.getGroupRoomMembers(roomId);
+          members.forEach(memberId => {
+            if (memberId !== socket.id) {
+              io.to(memberId).emit('received-gift', { giftType, fromTgId, mode: 'group' });
+            }
+          });
+          db.logGift({ fromTgId, toTgId: 'group:' + roomId, giftType, mode: 'group' });
+        }
+      } else {
+        // 1-on-1 mode
+        let targetSocketId = data.peerSocketId || matchmaking.getPeer(socket.id);
+        if (targetSocketId) {
+          const targetSocket = io.sockets.sockets.get(targetSocketId);
+          const toTgId = targetSocket ? targetSocket.handshake.query.tgId : data.toTgId;
+          io.to(targetSocketId).emit('received-gift', { giftType, fromTgId, mode: '1on1' });
+          db.logGift({ fromTgId, toTgId, giftType, mode: '1on1' });
+        }
       }
     });
 

@@ -172,6 +172,21 @@ app.post('/api/admin/broadcast', adminAuth, async (req, res) => {
   res.json({ success: true, sent });
 });
 
+// GET /api/admin/gifts
+app.get('/api/admin/gifts', adminAuth, (req, res) => {
+  const rawGifts = db.getGifts(100);
+  const gifts = rawGifts.map(g => {
+    const fromUser = db.getUser(g.fromTgId);
+    const toUser = g.toTgId && !g.toTgId.startsWith('group') ? db.getUser(g.toTgId) : null;
+    return {
+      ...g,
+      fromName: fromUser ? `${fromUser.firstName} (@${fromUser.username || 'yoki_yoq'})` : `ID: ${g.fromTgId}`,
+      toName: g.toTgId && g.toTgId.startsWith('group') ? '👥 Guruh' : (toUser ? `${toUser.firstName} (@${toUser.username || 'yoki_yoq'})` : `ID: ${g.toTgId}`)
+    };
+  });
+  res.json({ success: true, gifts });
+});
+
 // ──────────────────────────────────────────────────────────────────────────
 
 let botInstance = null;

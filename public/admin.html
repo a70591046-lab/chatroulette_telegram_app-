@@ -109,6 +109,9 @@
       <button onclick="showTab('broadcast')" class="nav-item text-left px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-3" id="nav-broadcast">
         <i class="fas fa-bullhorn w-4 text-amber-400"></i> Xabar Tarqatish
       </button>
+      <button onclick="showTab('gifts')" class="nav-item text-left px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-3" id="nav-gifts">
+        <i class="fas fa-gift w-4 text-pink-400"></i> Sovg'alar Tarixi
+      </button>
     </nav>
 
     <div class="mt-auto pt-4 border-t border-white/5">
@@ -288,6 +291,28 @@
           <span id="broadcastStatus" class="text-sm text-slate-400"></span>
         </div>
       </div>
+    <!-- GIFTS TAB -->
+    <div id="tab-gifts" class="hidden">
+      <div class="glass rounded-2xl overflow-hidden">
+        <div class="p-4 border-b border-white/5 flex items-center justify-between">
+          <h3 class="font-bold text-pink-400 flex items-center gap-2"><i class="fas fa-gift"></i> Sovg'alar Yuborish Tarixi (So'nggi 100 ta)</h3>
+          <button onclick="loadGifts()" class="text-xs glass px-3 py-1.5 rounded-xl text-slate-300 hover:text-white"><i class="fas fa-sync-alt"></i> Yangilash</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/5 text-slate-400 text-xs uppercase">
+                <th class="text-left py-3 px-4">Sovg'a</th>
+                <th class="text-left py-3 px-4">Yuboruvchi</th>
+                <th class="text-left py-3 px-4">Qabul qiluvchi</th>
+                <th class="text-left py-3 px-4">Rejim</th>
+                <th class="text-left py-3 px-4">Vaqt</th>
+              </tr>
+            </thead>
+            <tbody id="giftsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -355,7 +380,7 @@
   });
 
   function showTab(tab) {
-    ['dashboard','users','banned','broadcast'].forEach(t => {
+    ['dashboard','users','banned','broadcast','gifts'].forEach(t => {
       document.getElementById(`tab-${t}`).classList.add('hidden');
       document.getElementById(`nav-${t}`).classList.remove('active');
     });
@@ -365,12 +390,14 @@
       dashboard: ['Dashboard', 'Platforma statistikasi va boshqaruv'],
       users: ['Foydalanuvchilar', 'Barcha ro\'yxatdan o\'tgan foydalanuvchilar'],
       banned: ['Bloklangan', 'Platformadan ban qilingan foydalanuvchilar'],
-      broadcast: ['Xabar Tarqatish', 'Barcha foydalanuvchilarga xabar yuborish']
+      broadcast: ['Xabar Tarqatish', 'Barcha foydalanuvchilarga xabar yuborish'],
+      gifts: ['Sovg\'alar Tarixi', 'Kim kimga qanday sovg\'a yuborgani logi']
     };
     document.getElementById('pageTitle').textContent = titles[tab][0];
     document.getElementById('pageSubtitle').textContent = titles[tab][1];
     if (tab === 'users') loadUsers();
     if (tab === 'banned') loadBanned();
+    if (tab === 'gifts') loadGifts();
   }
 
   async function api(path, opts = {}) {
@@ -535,6 +562,33 @@
     } else {
       statusEl.textContent = '❌ Xatolik yuz berdi!';
       statusEl.className = 'text-sm text-red-400';
+    }
+  }
+
+  async function loadGifts() {
+    const res = await api('/api/admin/gifts');
+    if (res.success) {
+      const giftMap = {
+        rose: '🌹 Atirgul', heart: '💖 Yurak', car: '🏎️ Mashina', crown: '👑 Toj',
+        diamond: '💎 Olmos', cake: '🎂 Tort', firework: '🎆 Salut', ring: '💍 Uzuk'
+      };
+      const tbody = document.getElementById('giftsTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = res.gifts.length
+        ? res.gifts.map(g => `
+            <tr class="table-row border-b border-white/5">
+              <td class="py-3 px-4 font-bold text-pink-300 text-base">${giftMap[g.giftType] || g.giftType}</td>
+              <td class="py-3 px-4 font-medium text-white">${g.fromName}</td>
+              <td class="py-3 px-4 font-medium text-white">${g.toName}</td>
+              <td class="py-3 px-4">
+                <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${g.mode === 'group' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'}">
+                  ${g.mode === 'group' ? '👥 Guruh' : '👤 1-ga-1'}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-xs text-slate-400 font-mono">${new Date(g.timestamp).toLocaleString('uz-UZ')}</td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="5" class="py-8 text-center text-slate-500">Hali sovg\'a yuborilmadi</td></tr>';
     }
   }
 

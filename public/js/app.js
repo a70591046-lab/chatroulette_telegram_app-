@@ -713,20 +713,33 @@ window.sendGift = function(giftType) {
     return;
   }
   
-  if (!currentPeerSocketId) {
-    showToast('⚠️ Avval suhbatdosh toping!');
-    return;
-  }
-  
-  socket.emit('send-gift', {
-    fromTgId: tgUser ? tgUser.tgId : null,
-    toTgId: currentPeerTgId,
-    peerSocketId: currentPeerSocketId,
-    giftType: giftType
-  });
-  
-  showToast('🎁 Sovg\'a yuborildi!');
-  if (typeof playGiftAnimation === 'function') {
-    playGiftAnimation(giftType);
+  if (activeChatMode === 'group') {
+    socket.emit('send-gift', {
+      fromTgId: tgUser ? tgUser.tgId : null,
+      giftType: giftType,
+      mode: 'group'
+    });
+    showToast('🎁 Guruhga sovg\'a yuborildi!');
+    if (typeof playGiftAnimation === 'function') {
+      playGiftAnimation(giftType);
+    }
+  } else {
+    if (!currentPeerSocketId) {
+      showToast('⚠️ Avval suhbatdosh toping!');
+      return;
+    }
+    
+    socket.emit('send-gift', {
+      fromTgId: tgUser ? tgUser.tgId : null,
+      toTgId: currentPeerTgId,
+      peerSocketId: currentPeerSocketId,
+      giftType: giftType,
+      mode: '1on1'
+    });
+    
+    showToast('🎁 Sovg\'a yuborildi!');
+    if (typeof playGiftAnimation === 'function') {
+      playGiftAnimation(giftType);
+    }
   }
 };

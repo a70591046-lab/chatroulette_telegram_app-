@@ -4,20 +4,19 @@ const path = require('path');
 const DB_FILE = path.join(__dirname, 'data.json');
 
 const defaultData = {
-  users: {},            // tgId -> { tgId, username, firstName, phone, verifiedPhone, lang, gender, targetGender, age, bio, hobbies, likes, followers, friends: [], createdAt }
-  sponsors: [           // array of channels { id: '@example', name: 'Example Channel', link: 'https://t.me/example' }
-    // default sample sponsor channel if needed
-  ],
-  likes: [],            // { from: tgId, to: tgId, timestamp }
-  follows: [],          // { followerId: tgId, followingId: tgId, timestamp }
-  friends: [],          // { user1: tgId, user2: tgId, status: 'accepted'|'pending', timestamp }
-  bannedUsers: [],      // array of tgIds
+  users: {},
+  sponsors: [],
+  likes: [],
+  follows: [],
+  friends: [],
+  bannedUsers: [],
   callStats: {
     totalCalls: 0,
     totalDurationSeconds: 0,
-    dailyActive: {}     // date (YYYY-MM-DD) -> Set of active tgIds
+    dailyActive: {}
   },
-  broadcasts: []        // { id, text, photoUrl, voiceUrl, sentAt, totalRecipients, status }
+  broadcasts: [],
+  gifts: []             // { fromTgId, toTgId, giftType, mode, timestamp }
 };
 
 class Database {
@@ -293,7 +292,27 @@ class Database {
   isBanned(tgId) {
     return this.data.bannedUsers.includes(String(tgId));
   }
+
+  logGift({ fromTgId, toTgId, giftType, mode = '1on1' }) {
+    this.data.gifts = this.data.gifts || [];
+    this.data.gifts.unshift({
+      fromTgId: String(fromTgId),
+      toTgId: String(toTgId || 'group'),
+      giftType,
+      mode,
+      timestamp: Date.now()
+    });
+    // Keep only last 500 gifts
+    if (this.data.gifts.length > 500) this.data.gifts = this.data.gifts.slice(0, 500);
+    this.save();
+  }
+
+  getGifts(limit = 100) {
+    this.data.gifts = this.data.gifts || [];
+    return this.data.gifts.slice(0, limit);
+  }
 }
 
 module.exports = new Database();
+
 

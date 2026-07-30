@@ -138,6 +138,15 @@ class MatchmakingService {
   getPeer(socketId) {
     return this.activePairs.get(socketId) || null;
   }
+
+  getUserGroupRoom(socketId) {
+    return this.socketGroupRoom.get(socketId) || null;
+  }
+
+  getGroupRoomMembers(roomId) {
+    const members = this.groupRooms.get(roomId);
+    return members ? Array.from(members) : [];
+  }
 }
 
 module.exports = new MatchmakingService();
