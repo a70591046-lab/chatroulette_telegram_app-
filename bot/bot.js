@@ -60,15 +60,17 @@ function initBot() {
 
       adminState[tgId] = null; // reset state
       
+      const adminPanelUrl = `${config.WEBAPP_URL}/admin.html`;
+
       const inlineButtons = [
+        [Markup.button.url('🖥 Admin Panel (Web)', adminPanelUrl)],
         [Markup.button.callback('📊 Statistika', 'admin_stats')],
         [Markup.button.callback('📥 Foydalanuvchilar ro\'yxati (TXT)', 'admin_users_list')],
         [Markup.button.callback('📢 Majburiy obunalar', 'admin_sponsors')],
         [Markup.button.callback('✉️ Xabar yuborish', 'admin_broadcast')]
       ];
 
-      await ctx.reply('🛡 **Admin Paneliga Xush Kelibsiz!**\n\nQuyidagi menyudan kerakli bo\'limni tanlang:', {
-        parse_mode: 'Markdown',
+      await ctx.reply(`🛡 Admin Paneliga Xush Kelibsiz!\n\n🌐 Web panel: ${adminPanelUrl}\n🔑 Kirish uchun o'z Telegram ID ingizni kiriting: ${tgId}\n\nYoki quyidagi menyudan foydalaning:`, {
         ...Markup.inlineKeyboard(inlineButtons)
       });
     } catch (err) {
