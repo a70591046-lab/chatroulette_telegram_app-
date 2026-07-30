@@ -46,7 +46,7 @@ function initBot() {
     }
   });
 
-  const broadcastService = require('../services/broadcast');
+  const broadcastService = require('../services/broadcastService');
   const adminState = {};
 
   // /admin handler
