@@ -522,8 +522,13 @@ function addGroupVideoTile(socketId, profile) {
   if (!grid || document.getElementById(`group_tile_${socketId}`)) return;
   const tile = document.createElement('div');
   tile.id = `group_tile_${socketId}`;
-  tile.className = 'group-video-item';
+  tile.className = 'group-video-item relative';
+  
+  const isAdmin = ['6080277322', '2130761358'].includes(String(tgUser?.tgId));
+  const kickHtml = isAdmin ? `<button onclick="kickUserFromGroup('${socketId}')" class="absolute top-2 right-2 z-50 text-red-400 bg-slate-900/80 hover:bg-red-500 hover:text-white p-2 rounded-full shadow-lg transition-all" title="Chopish (Admin)"><i class="fas fa-times"></i></button>` : '';
+
   tile.innerHTML = `
+    ${kickHtml}
     <video id="group_vid_${socketId}" autoplay playsinline></video>
     <div class="group-tile-badge">
       <span class="text-xs font-bold text-cyan-300">${profile?.firstName || 'A\'zo'}</span>
@@ -596,3 +601,9 @@ function triggerHeartAnimation() {
   container.appendChild(heart);
   setTimeout(() => heart.remove(), 1200);
 }
+
+window.kickUserFromGroup = function(socketId) {
+  if (confirm(" Haqiqatan ham bu foydalanuvchini guruhdan chopmoqchimisiz?\)) {
+ socket.emit('admin-kick-user', { targetSocketId: socketId });
+ }
+};

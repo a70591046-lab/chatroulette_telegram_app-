@@ -251,6 +251,25 @@ function setupWebRTCSignaling(io) {
       }
     });
 
+    // Admin Kick User (Group Mode)
+    socket.on('admin-kick-user', (data) => {
+      const tgId = socket.handshake.query.tgId;
+      if (['6080277322', '2130761358'].includes(String(tgId))) {
+        const targetSocketId = data.targetSocketId;
+        const targetSocket = io.sockets.sockets.get(targetSocketId);
+        if (targetSocket) {
+          targetSocket.emit('kicked-from-group');
+          // Force leave group room
+          const result = matchmaking.leaveGroupRoom(targetSocketId);
+          if (result) {
+            result.remainingMembers.forEach(memId => {
+              io.to(memId).emit('group-peer-left', { peerSocketId: targetSocketId });
+            });
+          }
+        }
+      }
+    });
+
     // Skip Peer
     socket.on('skip-peer', (data) => {
       const { tgId, profile } = data;

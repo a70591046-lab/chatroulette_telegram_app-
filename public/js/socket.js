@@ -139,6 +139,11 @@ function initSocketConnection(tgId, webrtcManager) {
     }
   };
 
+  socket.on('kicked-from-group', () => {
+    if (typeof leaveChatRoom === 'function') leaveChatRoom();
+    showToast('❌ Admin sizni guruhdan chetlatdi (Ban)!');
+  });
+
   // ── 1-on-1 WebRTC signals ───────────────────────
   socket.on('webrtc-offer', async (data) => {
     console.log('[WebRTC] Received offer');
