@@ -43,18 +43,21 @@ function setupWebRTCSignaling(io) {
         const myProfile = db.getUser(tgId) || profile;
         const peerSocket = io.sockets.sockets.get(peerSocketId);
         const peerTgId = peerSocket ? peerSocket.handshake.query.tgId : null;
-        const peerProfile = peerTgId ? db.getUser(peerTgId) : null;
+        const peerProfileData = peerTgId ? db.getUser(peerTgId) : null;
+        // IMPORTANT: always include tgId in peerProfile for gifts, report, etc.
+        const peerProfileFull = Object.assign({}, peerProfileData || { firstName: 'Suhbatdosh', age: 20, hobbies: [] }, { tgId: peerTgId });
+        const myProfileFull = Object.assign({}, myProfile, { tgId: tgId });
 
         socket.emit('match-found', {
           peerSocketId,
           isInitiator: true,
-          peerProfile: peerProfile || { firstName: 'Suhbatdosh', age: 20, hobbies: [] }
+          peerProfile: peerProfileFull
         });
 
         io.to(peerSocketId).emit('match-found', {
           peerSocketId: socket.id,
           isInitiator: false,
-          peerProfile: myProfile
+          peerProfile: myProfileFull
         });
       } else {
         socket.emit('searching', { status: 'looking_for_peer' });
@@ -265,9 +268,10 @@ function setupWebRTCSignaling(io) {
 
     // Send Gift
     socket.on('send-gift', (data) => {
-      const peerSocketId = matchmaking.getPeer(socket.id);
-      if (peerSocketId) {
-        io.to(peerSocketId).emit('received-gift', {
+      // Try by peerSocketId first (most reliable), fallback to matchmaking peer lookup
+      let targetSocketId = data.peerSocketId || matchmaking.getPeer(socket.id);
+      if (targetSocketId) {
+        io.to(targetSocketId).emit('received-gift', {
           giftType: data.giftType,
           fromTgId: data.fromTgId
         });

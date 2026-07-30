@@ -438,10 +438,13 @@ function setupEventListeners() {
   document.querySelectorAll('.gift-item').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const giftType = e.currentTarget.getAttribute('data-gift');
-      if (currentPeerTgId && socket) {
-        socket.emit('send-gift', { fromTgId: tgUser.tgId, toTgId: currentPeerTgId, giftType });
+      // Send gift using peerSocketId (more reliable than tgId)
+      if (currentPeerSocketId && socket) {
+        socket.emit('send-gift', { fromTgId: tgUser.tgId, toTgId: currentPeerTgId, peerSocketId: currentPeerSocketId, giftType });
         showToast('🎁 Sovg\'a yuborildi!');
         playGiftAnimation(giftType);
+      } else {
+        showToast('⚠️ Suhbat topilmadi, avval suhbat boshlang!');
       }
       document.getElementById('giftModal')?.classList.add('hidden');
     });
