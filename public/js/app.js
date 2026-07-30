@@ -248,15 +248,18 @@ function renderFriendsList(friends) {
   container.innerHTML = friends.map(f => `
     <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold">
-          ${f.firstName.charAt(0).toUpperCase()}
+        <div class="relative">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold">
+            ${f.firstName.charAt(0).toUpperCase()}
+          </div>
+          ${f.isOnline ? '<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full"></div>' : '<div class="absolute bottom-0 right-0 w-3 h-3 bg-gray-500 border-2 border-slate-900 rounded-full"></div>'}
         </div>
         <div>
-          <div class="text-sm font-bold text-slate-200">${f.firstName}</div>
-          <div class="text-[10px] text-slate-400">${f.gender === 'female' ? 'Ayol' : 'Erkak'}</div>
+          <div class="text-sm font-bold text-slate-200">${f.firstName} ${f.isOnline ? '<span class="text-[9px] text-green-400 ml-1">Online</span>' : '<span class="text-[9px] text-gray-500 ml-1">Offline</span>'}</div>
+          <div class="text-[10px] text-slate-400">${f.username ? '@' + f.username : (f.gender === 'female' ? 'Ayol' : 'Erkak')}</div>
         </div>
       </div>
-      <button onclick="initiateDirectCall('${f.tgId}', '${f.firstName}')" class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/40 transition">
+      <button onclick="initiateDirectCall('${f.tgId}', '${f.firstName}')" class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/40 transition" title="Qo'ng'iroq qilish">
         <i class="fas fa-phone"></i>
       </button>
     </div>

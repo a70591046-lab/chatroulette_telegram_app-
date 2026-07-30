@@ -192,6 +192,7 @@ class Database {
         friends.push({
           tgId: user.tgId,
           firstName: user.firstName,
+          username: user.username,
           gender: user.gender
         });
       }

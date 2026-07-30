@@ -59,6 +59,7 @@ function initBot() {
       
       const inlineButtons = [
         [Markup.button.callback('📊 Statistika', 'admin_stats')],
+        [Markup.button.callback('📥 Foydalanuvchilar ro\'yxati (TXT)', 'admin_users_list')],
         [Markup.button.callback('📢 Majburiy obunalar', 'admin_sponsors')],
         [Markup.button.callback('✉️ Xabar yuborish', 'admin_broadcast')]
       ];
@@ -91,6 +92,33 @@ function initBot() {
       await ctx.reply(msg, { parse_mode: 'Markdown' });
     } catch (err) {
       console.error(err);
+    }
+  });
+
+  bot.action('admin_users_list', async (ctx) => {
+    try {
+      const tgId = String(ctx.from.id);
+      if (!config.ADMIN_IDS.includes(tgId)) return;
+      
+      const users = db.data.users;
+      let textContent = "Foydalanuvchilar Ro'yxati:\n\n";
+      let count = 1;
+      for (const id in users) {
+        const u = users[id];
+        const username = u.username ? `@${u.username}` : 'Yo\'q';
+        const gender = u.gender === 'female' ? 'Ayol' : 'Erkak';
+        textContent += `${count}. ID: ${u.tgId} | Ism: ${u.firstName} | Nik: ${username} | Jins: ${gender} | Yosh: ${u.age}\n`;
+        count++;
+      }
+      
+      await ctx.answerCbQuery();
+      await ctx.replyWithDocument({
+        source: Buffer.from(textContent, 'utf8'),
+        filename: 'foydalanuvchilar.txt'
+      }, { caption: "Tizimdagi barcha foydalanuvchilar ro'yxati." });
+    } catch (err) {
+      console.error(err);
+      await ctx.reply("Xatolik yuz berdi.");
     }
   });
 

@@ -1,9 +1,10 @@
 const matchmaking = require('./matchmaking');
 const db = require('../db/database');
 
-module.exports = function setupWebRTCSignaling(io) {
+const connectedUsers = new Map(); // tgId -> socketId
+
+function setupWebRTCSignaling(io) {
   const socketCallStartTime = new Map(); // socketId -> startTime
-  const connectedUsers = new Map(); // tgId -> socketId
 
   io.on('connection', (socket) => {
     console.log(`[Socket] Connected: ${socket.id}`);
@@ -329,3 +330,5 @@ module.exports = function setupWebRTCSignaling(io) {
     }
   });
 };
+
+module.exports = { setupWebRTCSignaling, connectedUsers };

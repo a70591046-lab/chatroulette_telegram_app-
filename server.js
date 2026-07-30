@@ -7,7 +7,7 @@ const { Server } = require('socket.io');
 const config = require('./config');
 const db = require('./db/database');
 const { initBot } = require('./bot/bot');
-const setupWebRTCSignaling = require('./services/webrtcSignaling');
+const { setupWebRTCSignaling, connectedUsers } = require('./services/webrtcSignaling');
 const broadcastService = require('./services/broadcastService');
 
 const app = express();
@@ -62,7 +62,13 @@ app.get('/api/user/:tgId', (req, res) => {
 
 app.get('/api/user/:id/friends', (req, res) => {
   const friends = db.getUserFriends(req.params.id);
-  res.json({ success: true, friends });
+  const friendsWithStatus = friends.map(f => {
+    return {
+      ...f,
+      isOnline: connectedUsers.has(String(f.tgId))
+    };
+  });
+  res.json({ success: true, friends: friendsWithStatus });
 });
 
 app.post('/api/user/update', (req, res) => {
