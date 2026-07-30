@@ -674,3 +674,30 @@ window.kickUserFromGroup = function(socketId) {
     socket.emit('admin-kick-user', { targetSocketId: socketId });
   }
 };
+
+// Called from inline onclick in Gift Modal HTML
+window.sendGift = function(giftType) {
+  document.getElementById('giftModal')?.classList.add('hidden');
+  
+  if (!socket) {
+    showToast('⚠️ Ulanish yo\'q!');
+    return;
+  }
+  
+  if (!currentPeerSocketId) {
+    showToast('⚠️ Avval suhbatdosh toping!');
+    return;
+  }
+  
+  socket.emit('send-gift', {
+    fromTgId: tgUser ? tgUser.tgId : null,
+    toTgId: currentPeerTgId,
+    peerSocketId: currentPeerSocketId,
+    giftType: giftType
+  });
+  
+  showToast('🎁 Sovg\'a yuborildi!');
+  if (typeof playGiftAnimation === 'function') {
+    playGiftAnimation(giftType);
+  }
+};
