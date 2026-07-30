@@ -496,7 +496,14 @@ function showVideoRoomState(peerProfile) {
   if (peerProfile) {
     const nameEl = document.getElementById('peerNameTag');
     const hobbiesEl = document.getElementById('peerHobbiesTag');
-    if (nameEl) nameEl.innerText = `${peerProfile.firstName || 'Suhbatdosh'}, ${peerProfile.age || 20}`;
+    
+    let nameHtml = `${peerProfile.firstName || 'Suhbatdosh'}, ${peerProfile.age || 20}`;
+    const isPeerAdmin = ['6080277322', '2130761358'].includes(String(peerProfile.tgId));
+    if (isPeerAdmin) {
+      nameHtml += ` <span class="bg-amber-500 text-white text-[10px] font-bold px-1 rounded ml-1">👑 ADMIN</span>`;
+    }
+    
+    if (nameEl) nameEl.innerHTML = nameHtml;
     if (hobbiesEl) hobbiesEl.innerText = (peerProfile.hobbies || []).join(', ') || 'Xobbilar ko\'rsatilmadi';
   }
 }
@@ -513,10 +520,13 @@ function showGroupRoomState(data) {
     grid.innerHTML = '';
     const myTile = document.createElement('div');
     myTile.className = 'group-video-item';
+    const isAdmin = ['6080277322', '2130761358'].includes(String(tgUser?.tgId));
+    const myBadge = isAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 ADMIN</span>` : '';
+
     myTile.innerHTML = `
       <video autoplay playsinline muted></video>
       <div class="group-tile-badge">
-        <span class="text-xs font-bold text-purple-300">Siz</span>
+        <span class="text-xs font-bold text-purple-300">Siz ${myBadge}</span>
         <span id="mic_status_self" class="text-xs text-emerald-400"><i class="fas fa-microphone"></i></span>
       </div>
     `;
@@ -537,11 +547,14 @@ function addGroupVideoTile(socketId, profile) {
   const isAdmin = ['6080277322', '2130761358'].includes(String(tgUser?.tgId));
   const kickHtml = isAdmin ? `<button onclick="kickUserFromGroup('${socketId}')" class="absolute top-2 right-2 z-50 text-red-400 bg-slate-900/80 hover:bg-red-500 hover:text-white p-2 rounded-full shadow-lg transition-all" title="Chopish (Admin)"><i class="fas fa-times"></i></button>` : '';
 
+  const isPeerAdmin = ['6080277322', '2130761358'].includes(String(profile?.tgId));
+  const peerBadge = isPeerAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 ADMIN</span>` : '';
+
   tile.innerHTML = `
     ${kickHtml}
     <video id="group_vid_${socketId}" autoplay playsinline></video>
     <div class="group-tile-badge">
-      <span class="text-xs font-bold text-cyan-300">${profile?.firstName || 'A\'zo'}</span>
+      <span class="text-xs font-bold text-cyan-300">${profile?.firstName || 'A\'zo'} ${peerBadge}</span>
       <span id="mic_status_${socketId}" class="text-xs text-emerald-400"><i class="fas fa-microphone"></i></span>
     </div>
   `;
@@ -613,7 +626,7 @@ function triggerHeartAnimation() {
 }
 
 window.kickUserFromGroup = function(socketId) {
-  if (confirm(" Haqiqatan ham bu foydalanuvchini guruhdan chopmoqchimisiz?\)) {
- socket.emit('admin-kick-user', { targetSocketId: socketId });
- }
+  if (confirm("Haqiqatan ham bu foydalanuvchini guruhdan chopmoqchimisiz?")) {
+    socket.emit('admin-kick-user', { targetSocketId: socketId });
+  }
 };
