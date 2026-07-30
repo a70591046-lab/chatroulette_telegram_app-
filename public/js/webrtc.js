@@ -225,15 +225,16 @@ class WebRTCManager {
   }
 
   toggleMic() {
+    let newState = false;
     if (this.localStream) {
-      const audioTrack = this.localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        this.isMicOn = audioTrack.enabled;
-        return this.isMicOn;
+      const audioTracks = this.localStream.getAudioTracks();
+      if (audioTracks.length > 0) {
+        newState = !audioTracks[0].enabled;
+        audioTracks.forEach(t => t.enabled = newState);
+        this.isMicOn = newState;
       }
     }
-    return false;
+    return this.isMicOn;
   }
 
   async flipCamera() {
@@ -246,8 +247,7 @@ class WebRTCManager {
 
     try {
       const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: this.facingMode } },
-        audio: true
+        video: { facingMode: { ideal: this.facingMode } }
       });
 
       const newVideoTrack = newStream.getVideoTracks()[0];
