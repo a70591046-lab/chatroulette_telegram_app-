@@ -5,6 +5,7 @@
 
 var socket = null;
 var currentPeerSocketId = null;
+var currentPeerTgId = null;
 var currentRoomId = null;
 
 // Railway backend URL (Socket.io server)
@@ -43,6 +44,7 @@ function initSocketConnection(tgId, webrtcManager) {
   socket.on('match-found', async (data) => {
     console.log('[Socket] Match found! isInitiator:', data.isInitiator);
     currentPeerSocketId = data.peerSocketId;
+    currentPeerTgId = data.peerProfile?.tgId;
     hideSearchingState();
     showVideoRoomState(data.peerProfile);
 
@@ -174,6 +176,7 @@ function initSocketConnection(tgId, webrtcManager) {
 
   socket.on('received-friend-request', () => {
     showToast('🤝 Suhbatdosh sizga do\'stlik taklifini yubordi!');
+    if (typeof loadFriendsList === 'function') loadFriendsList();
   });
 
   // ── Live Chat ───────────────────────────────────

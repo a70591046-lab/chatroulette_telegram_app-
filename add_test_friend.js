@@ -1,0 +1,1 @@
+const db = require('./db/database'); db.saveUser('999999999', { firstName: 'Test Friend', gender: 'male', lang: 'uz' }); db.addFriendRequest('7713174177', '999999999'); console.log('Test friend added');

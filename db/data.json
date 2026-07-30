@@ -20,6 +20,26 @@
       "avatar": "avatar_1",
       "createdAt": "2026-07-28T12:46:13.371Z"
     },
+    "999999999": {
+      "tgId": "999999999",
+      "username": "",
+      "firstName": "Test Friend",
+      "phone": null,
+      "verifiedPhone": false,
+      "lang": "uz",
+      "gender": "male",
+      "targetGender": "any",
+      "age": 20,
+      "bio": "",
+      "hobbies": [
+        "IT",
+        "Gaming"
+      ],
+      "likes": 0,
+      "followers": 0,
+      "avatar": "avatar_1",
+      "createdAt": "2026-07-30T10:46:10.748Z"
+    },
     "1477103854": {
       "tgId": "1477103854",
       "username": "Niklar2026",
@@ -242,6 +262,12 @@
       "user2": "FNyIwlKn8NMxl1FhAAAD",
       "status": "accepted",
       "timestamp": 1785242875593
+    },
+    {
+      "user1": "7713174177",
+      "user2": "999999999",
+      "status": "accepted",
+      "timestamp": 1785408370758
     }
   ],
   "callStats": {

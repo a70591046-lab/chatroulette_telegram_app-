@@ -404,22 +404,22 @@ function setupEventListeners() {
   });
 
   document.getElementById('likeBtn')?.addEventListener('click', () => {
-    if (currentPeerSocketId && socket) {
-      socket.emit('send-like', { fromTgId: tgUser.tgId, toTgId: currentPeerSocketId });
+    if (currentPeerTgId && socket) {
+      socket.emit('send-like', { fromTgId: tgUser.tgId, toTgId: currentPeerTgId });
       triggerHeartAnimation();
     }
   });
 
   document.getElementById('followBtn')?.addEventListener('click', () => {
-    if (currentPeerSocketId && socket) {
-      socket.emit('send-follow', { fromTgId: tgUser.tgId, toTgId: currentPeerSocketId });
+    if (currentPeerTgId && socket) {
+      socket.emit('send-follow', { fromTgId: tgUser.tgId, toTgId: currentPeerTgId });
       showToast('⭐ Obuna bo\'lindi!');
     }
   });
 
   document.getElementById('friendReqBtn')?.addEventListener('click', () => {
-    if (currentPeerSocketId && socket) {
-      socket.emit('send-friend-request', { fromTgId: tgUser.tgId, toTgId: currentPeerSocketId });
+    if (currentPeerTgId && socket) {
+      socket.emit('send-friend-request', { fromTgId: tgUser.tgId, toTgId: currentPeerTgId });
       showToast('🤝 Do\'stlik taklifi yuborildi!');
     }
   });
@@ -552,6 +552,7 @@ function resetVideoCallView() {
   const chatContainer = document.getElementById('chatOverlayContainer');
   if (chatContainer) chatContainer.innerHTML = '';
   currentPeerSocketId = null;
+  if (typeof currentPeerTgId !== 'undefined') currentPeerTgId = null;
 }
 
 function switchTab(tabId) {
@@ -569,6 +570,7 @@ function switchTab(tabId) {
   } else if (tabId === 'profile') {
     document.getElementById('profileTabContent')?.classList.remove('hidden');
     document.getElementById('tabBtnProfile')?.classList.add('text-purple-400', 'border-purple-400');
+    if (typeof loadFriendsList === 'function') loadFriendsList();
   }
 }
 
