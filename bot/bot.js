@@ -60,7 +60,7 @@ function initBot() {
 
       adminState[tgId] = null; // reset state
       
-      const adminPanelUrl = `${config.WEBAPP_URL}/admin.html`;
+      const adminPanelUrl = `${config.WEBAPP_URL}/admin.html?token=${tgId}`;
 
       const inlineButtons = [
         [Markup.button.url('🖥 Admin Panel (Web)', adminPanelUrl)],
@@ -70,7 +70,10 @@ function initBot() {
         [Markup.button.callback('✉️ Xabar yuborish', 'admin_broadcast')]
       ];
 
-      await ctx.reply(`🛡 Admin Paneliga Xush Kelibsiz!\n\n🌐 Web panel: ${adminPanelUrl}\n🔑 Kirish uchun o'z Telegram ID ingizni kiriting: ${tgId}\n\nYoki quyidagi menyudan foydalaning:`, {
+      await ctx.reply(`🛡 Admin Paneliga Xush Kelibsiz!
+
+🌐 Web panel tayyor — pastdagi tugmani bosing:
+🔑 Siz avtomatik kirasiz (ID: ${tgId})`, {
         ...Markup.inlineKeyboard(inlineButtons)
       });
     } catch (err) {

@@ -66,8 +66,8 @@
 </head>
 <body class="text-slate-100 min-h-screen">
 
-<!-- LOGIN SCREEN -->
-<div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:flex!important">
+<!-- LOGIN SCREEN (shown only if no URL token) -->
+<div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
   <div class="glass rounded-3xl p-8 w-full max-w-sm text-center">
     <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-3xl">⚡</div>
     <h1 class="text-2xl font-extrabold mb-1 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">Admin Panel</h1>
@@ -297,6 +297,29 @@
   const API = 'https://web-production-65a7f.up.railway.app';
   let adminToken = '';
   let allUsers = [];
+
+  // Auto-login from URL param ?token=XXXX
+  async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    if (urlToken) {
+      try {
+        const res = await fetch(`${API}/api/admin/stats?adminToken=${urlToken}`);
+        if (res.ok) {
+          adminToken = urlToken;
+          document.getElementById('loginScreen').style.display = 'none';
+          document.getElementById('adminApp').classList.remove('hidden');
+          document.getElementById('sidebarAdminId').textContent = `ID: ${urlToken}`;
+          loadDashboard();
+          return;
+        }
+      } catch(e) {}
+    }
+    // Show login screen if no valid token in URL
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+
+  window.addEventListener('DOMContentLoaded', init);
 
   async function doLogin() {
     const val = document.getElementById('adminTokenInput').value.trim();
