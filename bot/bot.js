@@ -79,7 +79,7 @@ function initBot() {
       if (!config.ADMIN_IDS.includes(tgId)) return;
       
       const stats = db.getAnalytics();
-      let msg = `📊 **Platforma Statistikasi:**\n\n` +
+      let msg = `📊 Platforma Statistikasi:\n\n` +
                   `👥 Jami foydalanuvchilar: ${stats.totalUsers}\n` +
                   `📈 Kunlik faol (DAU): ${stats.dau}\n` +
                   `📅 Oylik faol (MAU): ${stats.mau}\n` +
@@ -87,7 +87,7 @@ function initBot() {
                   `⏱ Umumiy davomiylik: ${Math.floor(stats.totalDurationSeconds / 60)} daqiqa\n\n` +
                   `👨 Erkaklar: ${stats.genderRatio.male} | 👩 Ayollar: ${stats.genderRatio.female}\n` +
                   `🇺🇿 UZ: ${stats.langRatio.uz} | 🇷🇺 RU: ${stats.langRatio.ru}\n\n` +
-                  `📋 **Foydalanuvchilar:**\n`;
+                  `📋 Foydalanuvchilar:\n`;
                   
       const users = db.data.users;
       let count = 1;
@@ -105,7 +105,7 @@ function initBot() {
       }
                   
       await ctx.answerCbQuery();
-      await ctx.reply(msg, { parse_mode: 'Markdown' });
+      await ctx.reply(msg);
     } catch (err) {
       console.error(err);
     }
