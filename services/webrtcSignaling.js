@@ -303,6 +303,12 @@ module.exports = function setupWebRTCSignaling(io) {
     // Disconnect
     socket.on('disconnect', () => {
       console.log(`[Socket] Disconnected: ${socket.id}`);
+      
+      const tgId = socket.handshake.query.tgId;
+      if (tgId && connectedUsers.get(String(tgId)) === socket.id) {
+        connectedUsers.delete(String(tgId));
+      }
+
       handleCallEnd(socket.id);
       matchmaking.leaveGroupRoom(socket.id);
       const peerSocketId = matchmaking.endCall(socket.id);
