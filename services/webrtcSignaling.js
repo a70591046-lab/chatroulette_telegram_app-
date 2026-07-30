@@ -2,8 +2,10 @@ const matchmaking = require('./matchmaking');
 const db = require('../db/database');
 
 const connectedUsers = new Map(); // tgId -> socketId
+let ioInstance = null;
 
 function setupWebRTCSignaling(io) {
+  ioInstance = io;
   const socketCallStartTime = new Map(); // socketId -> startTime
 
   io.on('connection', (socket) => {
@@ -19,6 +21,11 @@ function setupWebRTCSignaling(io) {
       const { tgId, profile } = data;
       if (!tgId) {
         console.log(`[Socket] ${socket.id} no tgId provided`);
+        return;
+      }
+      
+      if (db.isBanned(tgId)) {
+        socket.emit('banned');
         return;
       }
 
@@ -58,6 +65,11 @@ function setupWebRTCSignaling(io) {
     socket.on('start-group-search', (data) => {
       const { tgId, profile } = data;
       if (!tgId) return;
+
+      if (db.isBanned(tgId)) {
+        socket.emit('banned');
+        return;
+      }
 
       db.recordActivity(tgId);
       const res = matchmaking.joinGroupRoom(socket.id, tgId, profile);
@@ -251,6 +263,21 @@ function setupWebRTCSignaling(io) {
       }
     });
 
+    // Report User
+    socket.on('report-user', (data) => {
+      const reporterTgId = socket.handshake.query.tgId;
+      const targetTgId = data.targetTgId;
+      const targetUser = db.getUser(targetTgId);
+      const targetName = targetUser ? targetUser.firstName : 'Noma\'lum';
+      
+      const { sendToAdmins } = require('../bot/bot');
+      sendToAdmins(`⚠️ **SHIKOYAT!**\n\nFoydalanuvchi: ${data.fromName || reporterTgId}\nShikoyat qildi: ${targetName} (ID: ${targetTgId})\n\nBu foydalanuvchini bloklash uchun pastdagi tugmani bosing:`, {
+        reply_markup: {
+          inline_keyboard: [[ { text: "🚫 Ban Qilish (Bloklash)", callback_data: `ban_user_${targetTgId}` } ]]
+        }
+      });
+    });
+
     // Admin Kick User (Group Mode)
     socket.on('admin-kick-user', (data) => {
       const tgId = socket.handshake.query.tgId;
@@ -350,4 +377,15 @@ function setupWebRTCSignaling(io) {
   });
 };
 
-module.exports = { setupWebRTCSignaling, connectedUsers };
+function disconnectUser(tgId) {
+  const socketId = connectedUsers.get(String(tgId));
+  if (socketId && ioInstance) {
+    const socket = ioInstance.sockets.sockets.get(socketId);
+    if (socket) {
+      socket.emit('banned');
+      socket.disconnect(true);
+    }
+  }
+}
+
+module.exports = { setupWebRTCSignaling, connectedUsers, disconnectUser };

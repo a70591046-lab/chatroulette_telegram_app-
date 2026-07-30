@@ -427,6 +427,16 @@ function setupEventListeners() {
     }
   });
 
+  document.getElementById('reportBtn')?.addEventListener('click', () => {
+    if (currentPeerTgId && socket) {
+      if (confirm('Rostdan ham bu foydalanuvchi ustidan Adminga shikoyat qilmoqchimisiz?')) {
+        socket.emit('report-user', { targetTgId: currentPeerTgId, fromName: tgUser.firstName });
+        showToast('⚠️ Shikoyatingiz Adminga yuborildi. Rahmat!');
+        startMatchmakingSearch(); // skip immediately
+      }
+    }
+  });
+
   document.getElementById('skipPeerBtn')?.addEventListener('click', () => {
     startMatchmakingSearch();
   });

@@ -3,8 +3,11 @@ const config = require('../config');
 const db = require('../db/database');
 const { getText } = require('./i18n');
 
+let botInstance = null;
+
 function initBot() {
   const bot = new Telegraf(config.BOT_TOKEN);
+  botInstance = bot;
 
   // Helper: Check if user is subscribed to all mandatory sponsor channels
   async function checkSponsorSubscription(userId) {
@@ -375,9 +378,41 @@ function initBot() {
     );
   }
 
+  bot.action(/^ban_user_(.+)$/, async (ctx) => {
+    try {
+      const tgId = String(ctx.from.id);
+      if (!config.ADMIN_IDS.includes(tgId)) return;
+      
+      const targetId = ctx.match[1];
+      db.banUser(targetId);
+      
+      await ctx.answerCbQuery('Foydalanuvchi bloklandi!');
+      await ctx.editMessageText(ctx.callbackQuery.message.text + '\n\n✅ BLOKLANGAN', {
+        reply_markup: { inline_keyboard: [] }
+      });
+      
+      const { disconnectUser } = require('../services/webrtcSignaling');
+      if (typeof disconnectUser === 'function') {
+        disconnectUser(targetId);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
   return bot;
 }
 
+async function sendToAdmins(msg, extra) {
+  if (!botInstance) return;
+  for (const adminId of config.ADMIN_IDS) {
+    try {
+      await botInstance.telegram.sendMessage(adminId, msg, extra);
+    } catch (e) { console.error("Admin xabar yuborishda xato:", e); }
+  }
+}
+
 module.exports = {
-  initBot
+  initBot,
+  sendToAdmins
 };

@@ -141,7 +141,12 @@ function initSocketConnection(tgId, webrtcManager) {
 
   socket.on('kicked-from-group', () => {
     if (typeof leaveChatRoom === 'function') leaveChatRoom();
-    showToast('❌ Admin sizni guruhdan chetlatdi (Ban)!');
+    showToast('❌ Admin sizni guruhdan chetlatdi!');
+  });
+
+  socket.on('banned', () => {
+    if (typeof leaveChatRoom === 'function') leaveChatRoom();
+    showToast('🚫 Siz platformadan butunlay bloklandingiz!');
   });
 
   // ── 1-on-1 WebRTC signals ───────────────────────

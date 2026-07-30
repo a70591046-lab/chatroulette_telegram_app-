@@ -11,6 +11,7 @@ const defaultData = {
   likes: [],            // { from: tgId, to: tgId, timestamp }
   follows: [],          // { followerId: tgId, followingId: tgId, timestamp }
   friends: [],          // { user1: tgId, user2: tgId, status: 'accepted'|'pending', timestamp }
+  bannedUsers: [],      // array of tgIds
   callStats: {
     totalCalls: 0,
     totalDurationSeconds: 0,
@@ -38,6 +39,8 @@ class Database {
         this.data.sponsors = this.data.sponsors || [];
         this.data.likes = this.data.likes || [];
         this.data.follows = this.data.follows || [];
+        this.data.friends = this.data.friends || [];
+        this.data.bannedUsers = this.data.bannedUsers || [];
         this.data.friends = this.data.friends || [];
         this.data.callStats = this.data.callStats || { totalCalls: 0, totalDurationSeconds: 0, dailyActive: {} };
         this.data.broadcasts = this.data.broadcasts || [];
@@ -278,6 +281,19 @@ class Database {
     this.data.broadcasts = this.data.broadcasts.filter(b => b.id !== id);
     this.save();
   }
+
+  banUser(tgId) {
+    const id = String(tgId);
+    if (!this.data.bannedUsers.includes(id)) {
+      this.data.bannedUsers.push(id);
+      this.save();
+    }
+  }
+
+  isBanned(tgId) {
+    return this.data.bannedUsers.includes(String(tgId));
+  }
 }
 
 module.exports = new Database();
+
