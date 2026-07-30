@@ -263,6 +263,17 @@ function setupWebRTCSignaling(io) {
       }
     });
 
+    // Send Gift
+    socket.on('send-gift', (data) => {
+      const peerSocketId = matchmaking.getPeer(socket.id);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit('received-gift', {
+          giftType: data.giftType,
+          fromTgId: data.fromTgId
+        });
+      }
+    });
+
     // Report User
     socket.on('report-user', (data) => {
       const reporterTgId = socket.handshake.query.tgId;
@@ -281,7 +292,8 @@ function setupWebRTCSignaling(io) {
     // Admin Kick User (Group Mode)
     socket.on('admin-kick-user', (data) => {
       const tgId = socket.handshake.query.tgId;
-      if (['6080277322', '2130761358'].includes(String(tgId))) {
+      const config = require('../config');
+      if (config.ADMIN_IDS.includes(String(tgId))) {
         const targetSocketId = data.targetSocketId;
         const targetSocket = io.sockets.sockets.get(targetSocketId);
         if (targetSocket) {

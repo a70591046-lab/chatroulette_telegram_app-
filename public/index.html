@@ -184,6 +184,11 @@
               <i class="fas fa-user-plus"></i>
             </button>
 
+            <!-- Gift Button -->
+            <button id="giftBtn" class="ctrl-btn text-pink-400" title="Sovg'a yuborish (Gifts)">
+              <i class="fas fa-gift"></i>
+            </button>
+
             <!-- Report / Shikoyat -->
             <button id="reportBtn" class="ctrl-btn text-red-500" title="Shikoyat qilish (Report)">
               <i class="fas fa-exclamation-triangle"></i>
@@ -357,6 +362,34 @@
     </div>
   </div>
 
+  <!-- Gift Modal -->
+  <div id="giftModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="glass-panel w-full sm:w-80 rounded-t-3xl sm:rounded-3xl p-6 transform transition-transform translate-y-full sm:translate-y-0" id="giftModalContent">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-white">Sovg'a yuborish 🎁</h3>
+        <button id="closeGiftModalBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <button class="gift-item p-3 bg-white/10 hover:bg-white/20 rounded-xl text-center transition-colors" data-gift="rose">
+          <div class="text-4xl mb-1">🌹</div>
+          <div class="text-xs font-semibold text-pink-300">Atirgul</div>
+        </button>
+        <button class="gift-item p-3 bg-white/10 hover:bg-white/20 rounded-xl text-center transition-colors" data-gift="heart">
+          <div class="text-4xl mb-1">💖</div>
+          <div class="text-xs font-semibold text-red-400">Yurak</div>
+        </button>
+        <button class="gift-item p-3 bg-white/10 hover:bg-white/20 rounded-xl text-center transition-colors" data-gift="car">
+          <div class="text-4xl mb-1">🏎️</div>
+          <div class="text-xs font-semibold text-cyan-300">Mashina</div>
+        </button>
+        <button class="gift-item p-3 bg-white/10 hover:bg-white/20 rounded-xl text-center transition-colors" data-gift="crown">
+          <div class="text-4xl mb-1">👑</div>
+          <div class="text-xs font-semibold text-amber-400">Toj</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Application Scripts -->
   <script src="js/i18n.js?v=2"></script>
   <script src="js/webrtc.js?v=2.0"></script>
@@ -364,3 +397,4 @@
   <script src="js/app.js?v=2.0"></script>
 </body>
 </html>
+

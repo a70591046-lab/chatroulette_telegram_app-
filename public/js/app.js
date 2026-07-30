@@ -427,6 +427,26 @@ function setupEventListeners() {
     }
   });
 
+  document.getElementById('giftBtn')?.addEventListener('click', () => {
+    document.getElementById('giftModal')?.classList.remove('hidden');
+  });
+
+  document.getElementById('closeGiftModalBtn')?.addEventListener('click', () => {
+    document.getElementById('giftModal')?.classList.add('hidden');
+  });
+
+  document.querySelectorAll('.gift-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const giftType = e.currentTarget.getAttribute('data-gift');
+      if (currentPeerTgId && socket) {
+        socket.emit('send-gift', { fromTgId: tgUser.tgId, toTgId: currentPeerTgId, giftType });
+        showToast('🎁 Sovg\'a yuborildi!');
+        playGiftAnimation(giftType);
+      }
+      document.getElementById('giftModal')?.classList.add('hidden');
+    });
+  });
+
   document.getElementById('reportBtn')?.addEventListener('click', () => {
     if (currentPeerTgId && socket) {
       if (confirm('Rostdan ham bu foydalanuvchi ustidan Adminga shikoyat qilmoqchimisiz?')) {
@@ -498,7 +518,7 @@ function showVideoRoomState(peerProfile) {
     const hobbiesEl = document.getElementById('peerHobbiesTag');
     
     let nameHtml = `${peerProfile.firstName || 'Suhbatdosh'}, ${peerProfile.age || 20}`;
-    const isPeerAdmin = ['6080277322', '2130761358'].includes(String(peerProfile.tgId));
+    const isPeerAdmin = ADMIN_TELEGRAM_IDS.includes(String(peerProfile.tgId));
     if (isPeerAdmin) {
       nameHtml += ` <span class="bg-amber-500 text-white text-[10px] font-bold px-1 rounded ml-1">👑 ADMIN</span>`;
     }
@@ -520,7 +540,7 @@ function showGroupRoomState(data) {
     grid.innerHTML = '';
     const myTile = document.createElement('div');
     myTile.className = 'group-video-item';
-    const isAdmin = ['6080277322', '2130761358'].includes(String(tgUser?.tgId));
+    const isAdmin = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
     const myBadge = isAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 ADMIN</span>` : '';
 
     myTile.innerHTML = `
@@ -544,10 +564,10 @@ function addGroupVideoTile(socketId, profile) {
   tile.id = `group_tile_${socketId}`;
   tile.className = 'group-video-item relative';
   
-  const isAdmin = ['6080277322', '2130761358'].includes(String(tgUser?.tgId));
+  const isAdmin = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
   const kickHtml = isAdmin ? `<button onclick="kickUserFromGroup('${socketId}')" class="absolute top-2 right-2 z-50 text-red-400 bg-slate-900/80 hover:bg-red-500 hover:text-white p-2 rounded-full shadow-lg transition-all" title="Chopish (Admin)"><i class="fas fa-times"></i></button>` : '';
 
-  const isPeerAdmin = ['6080277322', '2130761358'].includes(String(profile?.tgId));
+  const isPeerAdmin = ADMIN_TELEGRAM_IDS.includes(String(profile?.tgId));
   const peerBadge = isPeerAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 ADMIN</span>` : '';
 
   tile.innerHTML = `
@@ -624,6 +644,27 @@ function triggerHeartAnimation() {
   container.appendChild(heart);
   setTimeout(() => heart.remove(), 1200);
 }
+
+window.playGiftAnimation = function(giftType) {
+  const container = document.getElementById('videoWrapper') || document.body;
+  const giftEl = document.createElement('div');
+  giftEl.className = 'gift-animation-item';
+  
+  let emoji = '🎁';
+  if (giftType === 'rose') emoji = '🌹';
+  if (giftType === 'heart') emoji = '💖';
+  if (giftType === 'car') emoji = '🏎️';
+  if (giftType === 'crown') emoji = '👑';
+  
+  giftEl.innerHTML = emoji;
+  container.appendChild(giftEl);
+  
+  // Force reflow for animation
+  void giftEl.offsetWidth;
+  giftEl.classList.add('animate-gift');
+  
+  setTimeout(() => giftEl.remove(), 3000);
+};
 
 window.kickUserFromGroup = function(socketId) {
   if (confirm("Haqiqatan ham bu foydalanuvchini guruhdan chopmoqchimisiz?")) {

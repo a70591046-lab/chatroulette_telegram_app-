@@ -149,6 +149,13 @@ function initSocketConnection(tgId, webrtcManager) {
     showToast('🚫 Siz platformadan butunlay bloklandingiz!');
   });
 
+  socket.on('received-gift', (data) => {
+    showToast(`🎁 Suhbatdosh sizga sovg'a yubordi!`);
+    if (typeof playGiftAnimation === 'function') {
+      playGiftAnimation(data.giftType);
+    }
+  });
+
   // ── 1-on-1 WebRTC signals ───────────────────────
   socket.on('webrtc-offer', async (data) => {
     console.log('[WebRTC] Received offer');
