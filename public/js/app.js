@@ -81,7 +81,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   switchTab('chat');
 
   // Pre-init camera/mic silently
-  webrtc.initLocalStream().catch(() => {});
+  webrtc.initLocalStream().then((stream) => {
+    if (stream) {
+      document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
+    }
+  }).catch(() => {});
 });
 
 async function requestCameraMicPermission() {
@@ -565,7 +569,6 @@ function switchTab(tabId) {
   } else if (tabId === 'profile') {
     document.getElementById('profileTabContent')?.classList.remove('hidden');
     document.getElementById('tabBtnProfile')?.classList.add('text-purple-400', 'border-purple-400');
-  }
   }
 }
 
