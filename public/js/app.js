@@ -648,25 +648,54 @@ function triggerHeartAnimation() {
   setTimeout(() => heart.remove(), 1200);
 }
 
-window.playGiftAnimation = function(giftType) {
-  const container = document.getElementById('videoWrapper') || document.body;
-  const giftEl = document.createElement('div');
-  giftEl.className = 'gift-animation-item';
-  
-  let emoji = '🎁';
-  if (giftType === 'rose') emoji = '🌹';
-  if (giftType === 'heart') emoji = '💖';
-  if (giftType === 'car') emoji = '🏎️';
-  if (giftType === 'crown') emoji = '👑';
-  
-  giftEl.innerHTML = emoji;
-  container.appendChild(giftEl);
-  
-  // Force reflow for animation
-  void giftEl.offsetWidth;
-  giftEl.classList.add('animate-gift');
-  
-  setTimeout(() => giftEl.remove(), 3000);
+window.playGiftAnimation = function(giftType, fromName) {
+  const gifts = {
+    rose:     { emoji: '🌹', label: 'Atirgul', colors: ['#f43f5e','#fb7185','#fda4af'] },
+    heart:    { emoji: '💖', label: 'Yurak',   colors: ['#ec4899','#f472b6','#f9a8d4'] },
+    car:      { emoji: '🏎️', label: 'Mashina', colors: ['#06b6d4','#22d3ee','#67e8f9'] },
+    crown:    { emoji: '👑', label: 'Toj',     colors: ['#f59e0b','#fbbf24','#fde68a'] },
+    diamond:  { emoji: '💎', label: 'Olmos',   colors: ['#8b5cf6','#a78bfa','#c4b5fd'] },
+    cake:     { emoji: '🎂', label: 'Tort',    colors: ['#f97316','#fb923c','#fdba74'] },
+    firework: { emoji: '🎆', label: 'Salut',   colors: ['#10b981','#34d399','#6ee7b7'] },
+    ring:     { emoji: '💍', label: 'Uzuk',    colors: ['#e5e7eb','#f9fafb','#d1d5db'] },
+  };
+  const g = gifts[giftType] || gifts.rose;
+
+  // 1) Big emoji animation
+  const el = document.createElement('div');
+  el.className = 'gift-animation-item';
+  el.textContent = g.emoji;
+  document.body.appendChild(el);
+  void el.offsetWidth;
+  el.classList.add('animate-gift');
+  setTimeout(() => el.remove(), 3200);
+
+  // 2) Label below
+  const lbl = document.createElement('div');
+  lbl.className = 'gift-label';
+  lbl.textContent = g.label;
+  document.body.appendChild(lbl);
+  setTimeout(() => lbl.remove(), 3200);
+
+  // 3) Confetti particles burst
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight / 2;
+  for (let i = 0; i < 24; i++) {
+    const p = document.createElement('div');
+    p.className = 'gift-particle';
+    p.style.left = cx + 'px';
+    p.style.top  = cy + 'px';
+    p.style.background = g.colors[i % g.colors.length];
+    const angle  = (Math.PI * 2 * i) / 24 + (Math.random() - 0.5) * 0.6;
+    const dist   = 80 + Math.random() * 140;
+    p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    p.style.animationDelay = (Math.random() * 0.3) + 's';
+    p.style.width  = (8 + Math.random() * 10) + 'px';
+    p.style.height = p.style.width;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 2000);
+  }
 };
 
 window.kickUserFromGroup = function(socketId) {

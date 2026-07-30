@@ -341,23 +341,96 @@ html, body {
 
 /* Gift Animation */
 .gift-animation-item {
-  position: absolute;
+  position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(0.1);
-  font-size: 8rem;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 7rem;
   opacity: 0;
   pointer-events: none;
-  z-index: 100;
-  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  filter: drop-shadow(0 0 40px rgba(255,255,255,0.5));
+  user-select: none;
 }
 .animate-gift {
-  animation: giftPop 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: giftPop 3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 @keyframes giftPop {
-  0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
-  20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-  30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  70% { transform: translate(-50%, -50%) scale(1) translateY(0); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(0.8) translateY(-100px); opacity: 0; }
+  0%   { transform: translate(-50%, -50%) scale(0) rotate(-20deg); opacity: 0; }
+  15%  { transform: translate(-50%, -50%) scale(1.5) rotate(5deg); opacity: 1; }
+  30%  { transform: translate(-50%, -50%) scale(0.95) rotate(-2deg); opacity: 1; }
+  45%  { transform: translate(-50%, -50%) scale(1.1) rotate(1deg); opacity: 1; }
+  65%  { transform: translate(-50%, -55%) scale(1) rotate(0); opacity: 1; }
+  85%  { transform: translate(-50%, -70%) scale(0.85) rotate(0); opacity: 0.6; }
+  100% { transform: translate(-50%, -100%) scale(0.4) rotate(0); opacity: 0; }
 }
+.gift-label {
+  position: fixed;
+  top: calc(50% + 5rem);
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  background: linear-gradient(135deg, rgba(139,92,246,0.95), rgba(6,182,212,0.95));
+  color: white;
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 8px 24px;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(139,92,246,0.6);
+  opacity: 0;
+  animation: labelPop 3s ease forwards;
+}
+@keyframes labelPop {
+  0%   { transform: translateX(-50%) scale(0); opacity: 0; }
+  20%  { transform: translateX(-50%) scale(1.05); opacity: 1; }
+  35%  { transform: translateX(-50%) scale(1); opacity: 1; }
+  70%  { transform: translateX(-50%) scale(1); opacity: 1; }
+  100% { transform: translateX(-50%) scale(0.7); opacity: 0; }
+}
+.gift-particle {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  animation: particleFly 1.6s ease-out forwards;
+}
+@keyframes particleFly {
+  0%   { transform: translate(0,0) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0) rotate(720deg); opacity: 0; }
+}
+.gift-received-banner {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-140px);
+  background: linear-gradient(135deg, rgba(15,20,40,0.97), rgba(30,15,60,0.97));
+  border: 1px solid rgba(139,92,246,0.5);
+  border-radius: 20px;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 9999;
+  pointer-events: none;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 16px 48px rgba(139,92,246,0.45);
+  animation: bannerSlide 3.5s ease forwards;
+}
+.gift-received-banner .g-emoji { font-size: 2.4rem; animation: giftBounce 0.5s ease infinite alternate; }
+.gift-received-banner .g-text  { font-size: 0.85rem; font-weight: 800; color: white; }
+.gift-received-banner .g-sub   { font-size: 0.7rem; color: #a78bfa; margin-top: 2px; }
+@keyframes bannerSlide {
+  0%   { transform: translateX(-50%) translateY(-140px); opacity: 0; }
+  12%  { transform: translateX(-50%) translateY(0);      opacity: 1; }
+  80%  { transform: translateX(-50%) translateY(0);      opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-140px); opacity: 0; }
+}
+@keyframes giftBounce {
+  from { transform: scale(1)    rotate(-5deg); }
+  to   { transform: scale(1.18) rotate(5deg); }
+}
+

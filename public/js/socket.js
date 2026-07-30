@@ -150,7 +150,31 @@ function initSocketConnection(tgId, webrtcManager) {
   });
 
   socket.on('received-gift', (data) => {
-    showToast(`🎁 Suhbatdosh sizga sovg'a yubordi!`);
+    const gifts = {
+      rose:     { emoji: '🌹', label: 'Atirgul' },
+      heart:    { emoji: '💖', label: 'Yurak'   },
+      car:      { emoji: '🏎️', label: 'Mashina' },
+      crown:    { emoji: '👑', label: 'Toj'     },
+      diamond:  { emoji: '💎', label: 'Olmos'   },
+      cake:     { emoji: '🎂', label: 'Tort'    },
+      firework: { emoji: '🎆', label: 'Salut'   },
+      ring:     { emoji: '💍', label: 'Uzuk'    },
+    };
+    const g = gifts[data.giftType] || { emoji: '🎁', label: 'Sovg\'a' };
+
+    // Show received banner
+    const banner = document.createElement('div');
+    banner.className = 'gift-received-banner';
+    banner.innerHTML = `
+      <div class="g-emoji">${g.emoji}</div>
+      <div>
+        <div class="g-text">Suhbatdosh sovg'a yubordi!</div>
+        <div class="g-sub">${g.label} ${g.emoji}</div>
+      </div>`;
+    document.body.appendChild(banner);
+    setTimeout(() => banner.remove(), 3600);
+
+    // Also play animation
     if (typeof playGiftAnimation === 'function') {
       playGiftAnimation(data.giftType);
     }
