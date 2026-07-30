@@ -230,10 +230,27 @@ class WebRTCManager {
       const audioTracks = this.localStream.getAudioTracks();
       if (audioTracks.length > 0) {
         newState = !audioTracks[0].enabled;
-        audioTracks.forEach(t => t.enabled = newState);
+        // 1) Disable/enable all audio tracks in the local stream
+        audioTracks.forEach(t => { t.enabled = newState; });
         this.isMicOn = newState;
       }
     }
+
+    // 2) CRITICAL: Also mute/unmute on all RTCPeerConnection senders
+    // Just disabling the track is not enough; we must also stop the sender's
+    // RTP stream so the remote end truly hears silence.
+    const muteAllSenders = (pc) => {
+      if (!pc) return;
+      pc.getSenders().forEach(sender => {
+        if (sender.track && sender.track.kind === 'audio') {
+          sender.track.enabled = newState;
+        }
+      });
+    };
+
+    muteAllSenders(this.peerConnection);
+    this.groupConnections.forEach(pc => muteAllSenders(pc));
+
     return this.isMicOn;
   }
 
