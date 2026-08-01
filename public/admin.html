@@ -84,10 +84,34 @@
 </div>
 
 <!-- MAIN ADMIN LAYOUT -->
-<div id="adminApp" class="hidden min-h-screen flex">
+<div id="adminApp" class="hidden min-h-screen flex flex-col md:flex-row">
 
-  <!-- Sidebar -->
-  <aside class="w-64 flex-shrink-0 glass border-r border-white/5 flex flex-col p-4 gap-1 min-h-screen sticky top-0">
+  <!-- Mobile Top Bar & Nav -->
+  <div class="md:hidden glass border-b border-white/5 p-4 sticky top-0 z-40 bg-slate-950/90 backdrop-blur-lg">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center font-black text-sm">⚡</div>
+        <span class="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 text-sm">ADMIN PANEL</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="pulse-dot w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span id="mobileOnlineCount" class="text-xs text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded-full">0 Online</span>
+        <button onclick="refreshData()" class="p-2 text-slate-300 hover:text-white"><i class="fas fa-sync-alt"></i></button>
+      </div>
+    </div>
+    <!-- Horizontal Scroll Tabs for Mobile -->
+    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 text-xs font-bold whitespace-nowrap">
+      <button onclick="showTab('dashboard')" class="nav-item active px-3 py-2 rounded-xl bg-white/5 border border-white/10" id="mnav-dashboard">📊 Stats</button>
+      <button onclick="showTab('users')" class="nav-item px-3 py-2 rounded-xl bg-white/5 border border-white/10" id="mnav-users">👥 Userlar</button>
+      <button onclick="showTab('banned')" class="nav-item px-3 py-2 rounded-xl bg-white/5 border border-white/10" id="mnav-banned">🚫 Ban</button>
+      <button onclick="showTab('broadcast')" class="nav-item px-3 py-2 rounded-xl bg-white/5 border border-white/10" id="mnav-broadcast">📢 Reklama</button>
+      <button onclick="showTab('gifts')" class="nav-item px-3 py-2 rounded-xl bg-white/5 border border-white/10" id="mnav-gifts">🎁 Sovg'alar</button>
+      <button onclick="showTab('sponsors')" class="nav-item px-3 py-2 rounded-xl bg-white/5 border border-white/10" id="mnav-sponsors">📢 Obuna</button>
+    </div>
+  </div>
+
+  <!-- Sidebar (Desktop) -->
+  <aside class="hidden md:flex w-64 flex-shrink-0 glass border-r border-white/5 flex-col p-4 gap-1 min-h-screen sticky top-0">
     <div class="flex items-center gap-3 mb-6 px-2 pt-2">
       <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center font-black text-lg">⚡</div>
       <div>
@@ -128,7 +152,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 p-6 overflow-y-auto">
+  <main class="flex-1 p-4 md:p-6 overflow-y-auto w-full">
 
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
@@ -420,11 +444,16 @@
 
   function showTab(tab) {
     ['dashboard','users','banned','broadcast','gifts','sponsors'].forEach(t => {
-      document.getElementById(`tab-${t}`).classList.add('hidden');
-      document.getElementById(`nav-${t}`).classList.remove('active');
+      document.getElementById(`tab-${t}`)?.classList.add('hidden');
+      document.getElementById(`nav-${t}`)?.classList.remove('active');
+      document.getElementById(`mnav-${t}`)?.classList.remove('bg-purple-600', 'text-white');
+      document.getElementById(`mnav-${t}`)?.classList.add('bg-white/5');
     });
-    document.getElementById(`tab-${tab}`).classList.remove('hidden');
-    document.getElementById(`nav-${tab}`).classList.add('active');
+    document.getElementById(`tab-${tab}`)?.classList.remove('hidden');
+    document.getElementById(`nav-${tab}`)?.classList.add('active');
+    document.getElementById(`mnav-${tab}`)?.classList.remove('bg-white/5');
+    document.getElementById(`mnav-${tab}`)?.classList.add('bg-purple-600', 'text-white');
+
     const titles = {
       dashboard: ['Dashboard', 'Platforma statistikasi va boshqaruv'],
       users: ['Foydalanuvchilar', 'Barcha ro\'yxatdan o\'tgan foydalanuvchilar'],
@@ -465,6 +494,8 @@
       document.getElementById('s-dur').textContent = s.totalDurationMin + ' daq';
       document.getElementById('s-gender').textContent = `${s.males} / ${s.females}`;
       document.getElementById('onlineCountBadge').textContent = s.onlineUsers;
+      const mobBadge = document.getElementById('mobileOnlineCount');
+      if (mobBadge) mobBadge.textContent = `${s.onlineUsers} Online`;
     }
     if (usersRes.success) {
       allUsers = usersRes.users;

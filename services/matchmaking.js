@@ -4,6 +4,7 @@ class MatchmakingService {
     this.activePairs = new Map(); // socketId -> peerSocketId
     this.groupRooms = new Map(); // roomId -> Set of socketIds
     this.socketGroupRoom = new Map(); // socketId -> roomId
+    this.roomCreators = new Map(); // roomId -> creatorSocketId
   }
 
   addToQueue(socketId, tgId, profile) {
@@ -42,7 +43,6 @@ class MatchmakingService {
     this.removeFromQueue(socketId1);
     this.removeFromQueue(socketId2);
     
-    // If they are in another call, end it
     this.endCall(socketId1);
     this.endCall(socketId2);
 
@@ -54,7 +54,6 @@ class MatchmakingService {
     for (let i = 0; i < this.waitingQueue.length; i++) {
       const candidate = this.waitingQueue[i];
 
-      // Prevent matching with exact same socket connection
       if (candidate.socketId === item.socketId) {
         continue;
       }
@@ -66,7 +65,6 @@ class MatchmakingService {
         return candidate.socketId;
       }
     }
-    // Fallback: If no strict gender match, match with any available waiting user
     if (this.waitingQueue.length > 0) {
       for (let i = 0; i < this.waitingQueue.length; i++) {
         const candidate = this.waitingQueue[i];
@@ -94,16 +92,31 @@ class MatchmakingService {
     if (!targetRoomId) {
       targetRoomId = `group_${Date.now()}_${Math.floor(Math.random()*1000)}`;
       this.groupRooms.set(targetRoomId, new Set());
+      this.roomCreators.set(targetRoomId, socketId); // First user is Creator / Group Admin!
     }
 
     const roomMembers = this.groupRooms.get(targetRoomId);
     roomMembers.add(socketId);
     this.socketGroupRoom.set(socketId, targetRoomId);
 
+    const creatorSocketId = this.roomCreators.get(targetRoomId);
+
     return {
       roomId: targetRoomId,
+      creatorSocketId,
+      isCreator: creatorSocketId === socketId,
       members: Array.from(roomMembers).filter(id => id !== socketId)
     };
+  }
+
+  isRoomCreator(socketId) {
+    const roomId = this.socketGroupRoom.get(socketId);
+    if (!roomId) return false;
+    return this.roomCreators.get(roomId) === socketId;
+  }
+
+  getRoomCreator(roomId) {
+    return this.roomCreators.get(roomId) || null;
   }
 
   leaveGroupRoom(socketId) {
@@ -112,8 +125,20 @@ class MatchmakingService {
       const roomMembers = this.groupRooms.get(roomId);
       roomMembers.delete(socketId);
       this.socketGroupRoom.delete(socketId);
+
+      // If creator leaves, assign next member as creator/admin
+      if (this.roomCreators.get(roomId) === socketId) {
+        if (roomMembers.size > 0) {
+          const nextCreator = Array.from(roomMembers)[0];
+          this.roomCreators.set(roomId, nextCreator);
+        } else {
+          this.roomCreators.delete(roomId);
+        }
+      }
+
       if (roomMembers.size === 0) {
         this.groupRooms.delete(roomId);
+        this.roomCreators.delete(roomId);
       }
       return { roomId, remainingMembers: Array.from(roomMembers) };
     }

@@ -576,10 +576,37 @@ function showVideoRoomState(peerProfile) {
   }
 }
 
+let isCurrentGroupCreator = false;
+let currentGroupCreatorSocketId = null;
+
+function selectAppMode(mode) {
+  document.getElementById('welcomeModeModal')?.classList.add('hidden');
+  if (mode === 'solo') {
+    startMatchmakingSearch();
+  } else if (mode === 'group') {
+    startGroupVideoSearch();
+  }
+}
+
+// Show welcome modal on load if not searching yet
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const modal = document.getElementById('welcomeModeModal');
+    if (modal && document.getElementById('initialMatchView') && !document.getElementById('initialMatchView').classList.contains('hidden')) {
+      modal.classList.remove('hidden');
+    }
+  }, 400);
+});
+
 function showGroupRoomState(data) {
   document.getElementById('initialMatchView')?.classList.add('hidden');
   document.getElementById('searchingRadarView')?.classList.add('hidden');
   document.getElementById('activeCallView')?.classList.add('hidden');
+
+  if (data) {
+    isCurrentGroupCreator = !!data.isCreator;
+    currentGroupCreatorSocketId = data.creatorSocketId || null;
+  }
 
   // Use display:flex since the element uses inline style
   const groupView = document.getElementById('activeGroupView');
@@ -595,7 +622,14 @@ function showGroupRoomState(data) {
     const myTile = document.createElement('div');
     myTile.className = 'group-tile';
     const isAdmin = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
-    const myBadge = isAdmin ? `<span class="ega-badge">👑 EGA</span>` : '';
+    const isCreator = isCurrentGroupCreator;
+
+    let myBadge = '';
+    if (isAdmin) {
+      myBadge = `<span class="ega-badge">👑 EGA</span>`;
+    } else if (isCreator) {
+      myBadge = `<span class="bg-purple-600 text-white text-[9px] font-bold px-1 rounded ml-1">⭐ Admin</span>`;
+    }
 
     myTile.innerHTML = `
       <video autoplay playsinline muted></video>
@@ -624,6 +658,18 @@ window.openTargetedGiftModal = function(socketId, name, tgId) {
   document.getElementById('giftModal')?.classList.remove('hidden');
 };
 
+function toggleRemoteMemberMic(targetSocketId, currentMuted) {
+  if (socket && socket.connected) {
+    socket.emit('group-mute-remote-user', { targetSocketId, isMuted: !currentMuted });
+  }
+}
+
+function kickGroupMember(targetSocketId) {
+  if (socket && socket.connected) {
+    socket.emit('group-kick-user', { targetSocketId });
+  }
+}
+
 function addGroupVideoTile(socketId, profile) {
   const grid = document.getElementById('groupVideoGrid');
   if (!grid || document.getElementById(`group_tile_${socketId}`)) return;
@@ -631,18 +677,37 @@ function addGroupVideoTile(socketId, profile) {
   tile.id = `group_tile_${socketId}`;
   tile.className = 'group-tile';
 
-  const isOwner = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
-  const kickHtml = isOwner
-    ? `<button onclick="kickUserFromGroup('${socketId}')" class="group-tile-kick" title="Chiqarish"><i class="fas fa-times"></i></button>`
-    : '';
+  const isMeEga = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
+  const isMeCreator = isCurrentGroupCreator;
+  const canIControl = isMeEga || isMeCreator;
 
-  const giftHtml = `<button onclick="openTargetedGiftModal('${socketId}', '${(profile?.firstName || 'Azvo').replace(/'/g, "&#39;")}', '${profile?.tgId || ''}')" class="group-tile-gift" title="Sovg'a"><i class="fas fa-gift"></i></button>`;
+  const isTargetEga = ADMIN_TELEGRAM_IDS.includes(String(profile?.tgId));
+  const isTargetCreator = (currentGroupCreatorSocketId === socketId);
 
-  const isPeerAdmin = ADMIN_TELEGRAM_IDS.includes(String(profile?.tgId));
-  const peerBadge = isPeerAdmin ? `<span class="ega-badge">👑 EGA</span>` : '';
+  // KICK BUTTON: Render ONLY if I have admin authority AND target is NOT EGA!
+  let kickHtml = '';
+  if (canIControl && !isTargetEga) {
+    kickHtml = `<button onclick="kickGroupMember('${socketId}')" class="group-tile-kick" title="Chaqirib chiqarish"><i class="fas fa-times"></i></button>`;
+  }
+
+  // MUTE BUTTON: Render ONLY if I have admin authority AND target is NOT EGA!
+  let muteControlHtml = '';
+  if (canIControl && !isTargetEga) {
+    muteControlHtml = `<button onclick="toggleRemoteMemberMic('${socketId}', false)" class="group-tile-mute" title="Mikrofonni o'chirish/yoqish"><i class="fas fa-volume-mute"></i></button>`;
+  }
+
+  const giftHtml = `<button onclick="openTargetedGiftModal('${socketId}', '${(profile?.firstName || 'A\'zo').replace(/'/g, "&#39;")}', '${profile?.tgId || ''}')" class="group-tile-gift" title="Sovg'a"><i class="fas fa-gift"></i></button>`;
+
+  let peerBadge = '';
+  if (isTargetEga) {
+    peerBadge = `<span class="ega-badge">👑 EGA</span>`;
+  } else if (isTargetCreator) {
+    peerBadge = `<span class="bg-purple-600 text-white text-[9px] font-bold px-1 rounded ml-1">⭐ Admin</span>`;
+  }
 
   tile.innerHTML = `
     ${kickHtml}
+    ${muteControlHtml}
     ${giftHtml}
     <video id="group_vid_${socketId}" autoplay playsinline></video>
     <div class="group-tile-name">

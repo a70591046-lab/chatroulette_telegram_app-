@@ -294,6 +294,22 @@ function initSocketConnection(tgId, webrtcManager) {
     resetVideoCallView();
   });
 
+  socket.on('kicked-from-group', () => {
+    showToast('❌ Siz guruhdan chiqarildingiz!');
+    resetVideoCallView();
+  });
+
+  // Forced Mic Toggle from Group Admin or EGA
+  socket.on('remote-mic-force-toggle', (data) => {
+    webrtcManager.toggleMic(!data.isMuted);
+    showToast(data.isMuted ? '🔇 Admin mikrofoningizni o\'chirdi!' : '🎤 Admin mikrofoningizni yoqdi!');
+  });
+
+  // Action Denied (e.g. trying to kick or mute EGA)
+  socket.on('action-denied', (data) => {
+    showToast(`⚠️ ${data.message || 'Amal bajarilmadi!'}`);
+  });
+
   // ── ICE candidate passthrough ───────────────────
   webrtcManager.onIceCandidate = (candidate) => {
     if (socket && socket.connected) {

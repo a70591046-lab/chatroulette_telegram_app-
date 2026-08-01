@@ -380,6 +380,21 @@ html, body {
 }
 .group-tile-kick:hover { background: #ef4444; color: #fff; }
 
+.group-tile-mute {
+  position: absolute;
+  top: 8px; right: 44px;
+  z-index: 50;
+  background: rgba(15, 23, 42, 0.8);
+  color: #fbbf24;
+  border: none;
+  border-radius: 50%;
+  width: 30px; height: 30px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s, color 0.2s;
+}
+.group-tile-mute:hover { background: #f59e0b; color: #fff; }
+
 .group-tile-gift {
   position: absolute;
   top: 8px; left: 8px;

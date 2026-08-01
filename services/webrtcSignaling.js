@@ -93,6 +93,8 @@ function setupWebRTCSignaling(io) {
 
       socket.emit('group-joined', {
         roomId: res.roomId,
+        creatorSocketId: res.creatorSocketId,
+        isCreator: res.isCreator,
         existingMembers: existingMemberProfiles,
         myProfile: myProfileFull
       });
@@ -351,23 +353,59 @@ function setupWebRTCSignaling(io) {
       });
     });
 
-    // Admin Kick User (Group Mode)
-    socket.on('admin-kick-user', (data) => {
-      const tgId = socket.handshake.query.tgId;
+    // Group Kick User (Group Creator OR EGA can kick members, BUT EGA CAN NEVER BE KICKED)
+    socket.on('group-kick-user', (data) => {
+      const senderTgId = String(socket.handshake.query.tgId || '');
       const config = require('../config');
-      if (config.ADMIN_IDS.includes(String(tgId))) {
-        const targetSocketId = data.targetSocketId;
-        const targetSocket = io.sockets.sockets.get(targetSocketId);
-        if (targetSocket) {
-          targetSocket.emit('kicked-from-group');
-          // Force leave group room
-          const result = matchmaking.leaveGroupRoom(targetSocketId);
-          if (result) {
-            result.remainingMembers.forEach(memId => {
-              io.to(memId).emit('group-peer-left', { peerSocketId: targetSocketId });
-            });
-          }
+      const isEga = config.ADMIN_IDS.includes(senderTgId);
+      const isCreator = matchmaking.isRoomCreator(socket.id);
+
+      if (!isEga && !isCreator) {
+        socket.emit('action-denied', { message: "Faqat guruh admini yoki EGA guruhdan chiqara oladi!" });
+        return;
+      }
+
+      const targetSocketId = data.targetSocketId;
+      const targetSocket = io.sockets.sockets.get(targetSocketId);
+      if (targetSocket) {
+        const targetTgId = String(targetSocket.handshake.query.tgId || '');
+        if (config.ADMIN_IDS.includes(targetTgId)) {
+          socket.emit('action-denied', { message: "👑 EGA guruhdan chopilmaydi!" });
+          return;
         }
+
+        targetSocket.emit('kicked-from-group');
+        const result = matchmaking.leaveGroupRoom(targetSocketId);
+        if (result) {
+          result.remainingMembers.forEach(memId => {
+            io.to(memId).emit('group-peer-left', { peerSocketId: targetSocketId });
+          });
+        }
+      }
+    });
+
+    // Remote Mute / Unmute Mic (Group Creator OR EGA, BUT EGA MIC CAN NEVER BE MUTED BY OTHERS)
+    socket.on('group-mute-remote-user', (data) => {
+      const senderTgId = String(socket.handshake.query.tgId || '');
+      const config = require('../config');
+      const isEga = config.ADMIN_IDS.includes(senderTgId);
+      const isCreator = matchmaking.isRoomCreator(socket.id);
+
+      if (!isEga && !isCreator) {
+        socket.emit('action-denied', { message: "Faqat guruh admini yoki EGA ovozni boshqara oladi!" });
+        return;
+      }
+
+      const targetSocketId = data.targetSocketId;
+      const targetSocket = io.sockets.sockets.get(targetSocketId);
+      if (targetSocket) {
+        const targetTgId = String(targetSocket.handshake.query.tgId || '');
+        if (config.ADMIN_IDS.includes(targetTgId)) {
+          socket.emit('action-denied', { message: "👑 EGA mikrofoni o'chirilmaydi!" });
+          return;
+        }
+
+        targetSocket.emit('remote-mic-force-toggle', { isMuted: !!data.isMuted });
       }
     });
 
