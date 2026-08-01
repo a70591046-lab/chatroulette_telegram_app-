@@ -406,6 +406,31 @@ function setupEventListeners() {
     if (socket) socket.emit('send-mic-toggle', { isMuted: !isOn });
   });
 
+  window.toggleGroupMic = function() {
+    const isOn = webrtc.toggleMic();
+    const btn = document.getElementById('groupMicToggleBtn');
+    if (btn) {
+      btn.classList.toggle('btn-disabled', !isOn);
+      btn.classList.toggle('btn-active-mic', isOn);
+      btn.innerHTML = isOn ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>';
+    }
+    const selfMicIcon = document.getElementById('mic_status_self');
+    if (selfMicIcon) {
+      selfMicIcon.innerHTML = isOn ? '<i class="fas fa-microphone text-emerald-400"></i>' : '<i class="fas fa-microphone-slash text-red-400"></i>';
+    }
+    if (socket) socket.emit('send-mic-toggle', { isMuted: !isOn });
+  };
+
+  window.toggleGroupCam = function() {
+    const isOn = webrtc.toggleCamera();
+    const btn = document.getElementById('groupCamToggleBtn');
+    if (btn) {
+      btn.classList.toggle('btn-disabled', !isOn);
+      btn.innerHTML = isOn ? '<i class="fas fa-video"></i>' : '<i class="fas fa-video-slash"></i>';
+    }
+    if (socket) socket.emit('send-cam-toggle', { isOff: !isOn });
+  };
+
   document.getElementById('likeBtn')?.addEventListener('click', () => {
     if (currentPeerTgId && socket) {
       socket.emit('send-like', { fromTgId: tgUser.tgId, toTgId: currentPeerTgId });

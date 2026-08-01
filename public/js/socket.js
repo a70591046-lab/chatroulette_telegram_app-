@@ -68,6 +68,16 @@ function initSocketConnection(tgId, webrtcManager) {
         ? '<i class="fas fa-microphone-slash text-red-400"></i>'
         : '<i class="fas fa-microphone text-emerald-400"></i>';
     }
+
+    // Force remote video element volume/mute state to guarantee 100% silence
+    const remoteVid = document.getElementById('remoteVideo');
+    if (remoteVid) {
+      remoteVid.muted = isMuted;
+    }
+    const groupVid = document.getElementById(`group_vid_${data.fromSocketId}`);
+    if (groupVid) {
+      groupVid.muted = isMuted;
+    }
   });
 
   socket.on('peer-cam-toggle', (data) => {
