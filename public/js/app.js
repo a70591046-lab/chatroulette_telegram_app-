@@ -628,11 +628,16 @@ let isCurrentGroupCreator = false;
 let currentGroupCreatorSocketId = null;
 
 function selectAppMode(mode) {
-  document.getElementById('welcomeModeModal')?.classList.add('hidden');
+  const modal = document.getElementById('welcomeModeModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.add('hidden');
+  }
   setChatMode(mode);
   if (mode === 'solo') {
     startMatchmakingSearch();
   } else if (mode === 'group') {
+    isCurrentGroupCreator = true;
     startGroupVideoSearch();
   }
 }
@@ -745,7 +750,7 @@ function addGroupVideoTile(socketId, profile, isTileCreator) {
 
   const isMeEga = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
   const isMeCreator = isCurrentGroupCreator;
-  const canIControl = isMeEga || isMeCreator;
+  const canIControl = true; // All room members can mute/kick bad behaving members (except EGA)
 
   const isTargetEga = ADMIN_TELEGRAM_IDS.includes(String(profile?.tgId));
   const isTargetCreator = !!isTileCreator || (currentGroupCreatorSocketId === socketId);
