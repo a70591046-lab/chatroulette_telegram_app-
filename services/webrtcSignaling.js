@@ -65,7 +65,7 @@ function setupWebRTCSignaling(io) {
     });
 
     // Join Group Video Chat Lounge
-    socket.on('start-group-search', (data) => {
+    const handleGroupJoin = (data) => {
       const { tgId, profile } = data;
       if (!tgId) return;
 
@@ -106,7 +106,10 @@ function setupWebRTCSignaling(io) {
         isCreator: res.isCreator,
         peerProfile: myProfileFull
       });
-    });
+    };
+
+    socket.on('start-group-search', handleGroupJoin);
+    socket.on('join-group-room', handleGroupJoin);
 
     // Real-time Mute/Unmute Mic Signal
     socket.on('send-mic-toggle', (data) => {

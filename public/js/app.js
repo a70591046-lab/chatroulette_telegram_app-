@@ -629,21 +629,21 @@ let currentGroupCreatorSocketId = null;
 
 function selectAppMode(mode) {
   document.getElementById('welcomeModeModal')?.classList.add('hidden');
+  setChatMode(mode);
   if (mode === 'solo') {
     startMatchmakingSearch();
   } else if (mode === 'group') {
     startGroupVideoSearch();
   }
 }
+window.selectAppMode = selectAppMode;
 
-// Show welcome modal on load if not searching yet
+// Show welcome modal on load
 window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     const modal = document.getElementById('welcomeModeModal');
-    if (modal && document.getElementById('initialMatchView') && !document.getElementById('initialMatchView').classList.contains('hidden')) {
-      modal.classList.remove('hidden');
-    }
-  }, 400);
+    if (modal) modal.classList.remove('hidden');
+  }, 200);
 });
 
 function showGroupRoomState(data) {
@@ -806,6 +806,7 @@ function resetVideoCallView() {
   if (chatContainer) chatContainer.innerHTML = '';
   currentPeerSocketId = null;
   if (typeof currentPeerTgId !== 'undefined') currentPeerTgId = null;
+  document.getElementById('welcomeModeModal')?.classList.remove('hidden');
 }
 
 function switchTab(tabId) {
