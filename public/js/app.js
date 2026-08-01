@@ -627,6 +627,15 @@ function showVideoRoomState(peerProfile) {
 let isCurrentGroupCreator = false;
 let currentGroupCreatorSocketId = null;
 
+function showWelcomeModal() {
+  const modal = document.getElementById('welcomeModeModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
+  }
+}
+window.showWelcomeModal = showWelcomeModal;
+
 function selectAppMode(mode) {
   const modal = document.getElementById('welcomeModeModal');
   if (modal) {
@@ -646,8 +655,7 @@ window.selectAppMode = selectAppMode;
 // Show welcome modal on load
 window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
-    const modal = document.getElementById('welcomeModeModal');
-    if (modal) modal.classList.remove('hidden');
+    showWelcomeModal();
 
     if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.showPopup === 'function') {
       try {
@@ -665,7 +673,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
       } catch (e) {}
     }
-  }, 150);
+  }, 100);
 });
 
 function showGroupRoomState(data) {
@@ -828,7 +836,7 @@ function resetVideoCallView() {
   if (chatContainer) chatContainer.innerHTML = '';
   currentPeerSocketId = null;
   if (typeof currentPeerTgId !== 'undefined') currentPeerTgId = null;
-  document.getElementById('welcomeModeModal')?.classList.remove('hidden');
+  showWelcomeModal();
 }
 
 function switchTab(tabId) {
