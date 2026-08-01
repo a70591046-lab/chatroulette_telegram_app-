@@ -108,11 +108,17 @@
               🎥
             </div>
           </div>
-          <h2 id="matchTitleText" class="text-xl font-bold text-white mb-2">Tasodifiy Video Muloqot</h2>
-          <p id="matchDescText" class="text-xs text-slate-400 mb-6 max-w-xs">Yangi do'stlar topish va videoni boshlash uchun tugmani bosing.</p>
-          <button id="startSearchBtn" class="w-full max-w-xs py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 font-extrabold text-sm tracking-wider shadow-lg hover:brightness-110 active:scale-95 transition">
-            🚀 <span data-i18n="start_search">Suhbatdosh izlash</span>
-          </button>
+          <h2 id="matchTitleText" class="text-xl font-black text-white mb-1">Muloqot Turini Tanlang</h2>
+          <p id="matchDescText" class="text-xs text-slate-400 mb-6 max-w-xs">Chat ochasizmi yoki Guruh Video Room ochasizmi?</p>
+
+          <div class="w-full max-w-xs space-y-3">
+            <button onclick="selectAppMode('solo')" class="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-purple-800 border border-purple-500/40 text-white font-extrabold text-sm tracking-wider shadow-lg hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-3 group">
+              <span class="text-xl group-hover:scale-110 transition-transform">👤</span> 1-ga-1 Chat Ochish
+            </button>
+            <button onclick="selectAppMode('group')" class="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-cyan-800 border border-cyan-500/40 text-white font-extrabold text-sm tracking-wider shadow-lg hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-3 group">
+              <span class="text-xl group-hover:scale-110 transition-transform">👥</span> Guruh Video Room Ochish
+            </button>
+          </div>
         </div>
 
         <!-- State B: Radar Searching Animation -->
@@ -434,7 +440,7 @@
   </div>
 
   <!-- Welcome Mode Selection Modal (Shown on Launch) -->
-  <div id="welcomeModeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl p-4">
+  <div id="welcomeModeModal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/85 backdrop-blur-xl p-4">
     <div class="glass-panel w-full max-w-sm rounded-3xl p-6 text-center border border-cyan-500/30 shadow-2xl animate-fade-in">
       <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-purple-600 to-cyan-500 p-1 mx-auto mb-4 animate-pulse">
         <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-4xl">
@@ -472,9 +478,9 @@
 
   <!-- Application Scripts -->
   <script src="js/i18n.js?v=2"></script>
-  <script src="js/webrtc.js?v=4.3"></script>
-  <script src="js/socket.js?v=4.3"></script>
-  <script src="js/app.js?v=4.3"></script>
+  <script src="js/webrtc.js?v=5.0"></script>
+  <script src="js/socket.js?v=5.0"></script>
+  <script src="js/app.js?v=5.0"></script>
 </body>
 </html>
 

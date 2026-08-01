@@ -643,7 +643,24 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     const modal = document.getElementById('welcomeModeModal');
     if (modal) modal.classList.remove('hidden');
-  }, 200);
+
+    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.showPopup === 'function') {
+      try {
+        window.Telegram.WebApp.showPopup({
+          title: "Muloqot Turini Tanlang",
+          message: "Chat ochasizmi yoki Guruh Video Room ochasizmi?",
+          buttons: [
+            { id: "solo", type: "default", text: "👤 1-ga-1 Chat" },
+            { id: "group", type: "ok", text: "👥 Guruh Video Room" }
+          ]
+        }, (buttonId) => {
+          if (buttonId === 'solo' || buttonId === 'group') {
+            selectAppMode(buttonId);
+          }
+        });
+      } catch (e) {}
+    }
+  }, 150);
 });
 
 function showGroupRoomState(data) {
