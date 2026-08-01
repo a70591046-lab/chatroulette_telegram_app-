@@ -102,6 +102,10 @@ async function requestCameraMicPermission() {
 }
 
 async function startMatchmakingSearch() {
+  if (activeChatMode === 'group') {
+    startGroupVideoSearch();
+    return;
+  }
   if (!socket || !socket.connected) {
     showToast('⏳ Serverga ulanmoqda...');
     if (socket && typeof socket.connect === 'function') {
@@ -145,12 +149,56 @@ async function startMatchmakingSearch() {
 
   console.log('[App] Emitting search with tgId:', tgUser.tgId, 'mode:', activeChatMode);
 
-  if (activeChatMode === 'group') {
-    socket.emit('start-group-search', { tgId: tgUser.tgId, profile: currentProfile });
-  } else {
-    socket.emit('start-search', { tgId: tgUser.tgId, profile: currentProfile });
-  }
+  webrtc.initLocalStream().then(stream => {
+    socket.emit('start-search', {
+      tgId: tgUser.tgId,
+      gender: currentProfile.gender || 'male',
+      targetGender: currentProfile.targetGender || 'any',
+      profile: currentProfile
+    });
+  });
 }
+
+async function startGroupVideoSearch() {
+  activeChatMode = 'group';
+  if (!socket || !socket.connected) {
+    showToast('⏳ Serverga ulanmoqda...');
+    if (socket && typeof socket.connect === 'function') {
+      socket.connect();
+    } else if (typeof initSocketConnection === 'function' && tgUser) {
+      initSocketConnection(tgUser.tgId, webrtc);
+    }
+    let waited = 0;
+    while ((!socket || !socket.connected) && waited < 20) {
+      await new Promise(r => setTimeout(r, 100));
+      waited++;
+    }
+    if (!socket || !socket.connected) {
+      showToast('❌ Server bilan aloqa yo\'q, iltimos sahifani yangilang');
+      return;
+    }
+  }
+
+  if (!currentProfile) {
+    currentProfile = {
+      tgId: tgUser.tgId,
+      firstName: tgUser.firstName,
+      gender: 'male',
+      targetGender: 'any',
+      age: 22
+    };
+  }
+
+  showSearchingState();
+
+  webrtc.initLocalStream().then(stream => {
+    socket.emit('join-group-room', {
+      tgId: tgUser.tgId,
+      profile: currentProfile
+    });
+  });
+}
+window.startGroupVideoSearch = startGroupVideoSearch;
 
 // ── Direct Calling Functions ──────────────────────
 window.initiateDirectCall = function(targetTgId, targetName) {
