@@ -85,6 +85,7 @@ function setupWebRTCSignaling(io) {
         const mUser = mTgId ? db.getUser(mTgId) : null;
         return {
           socketId: mSocketId,
+          isCreator: mSocketId === res.creatorSocketId,
           profile: Object.assign({}, mUser || { firstName: 'Guruh A\'zosi' }, { tgId: mTgId })
         };
       });
@@ -101,6 +102,8 @@ function setupWebRTCSignaling(io) {
 
       socket.to(res.roomId).emit('group-peer-joined', {
         peerSocketId: socket.id,
+        creatorSocketId: res.creatorSocketId,
+        isCreator: res.isCreator,
         peerProfile: myProfileFull
       });
     });

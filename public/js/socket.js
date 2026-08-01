@@ -102,7 +102,8 @@ function initSocketConnection(tgId, webrtcManager) {
     for (const mem of data.existingMembers) {
       const memberSocketId = typeof mem === 'object' ? mem.socketId : mem;
       const memberProfile  = typeof mem === 'object' ? mem.profile  : { firstName: 'Guruh A\'zosi' };
-      addGroupVideoTile(memberSocketId, memberProfile);
+      const isMemCreator  = typeof mem === 'object' ? !!mem.isCreator : (memberSocketId === data.creatorSocketId);
+      addGroupVideoTile(memberSocketId, memberProfile, isMemCreator);
       try {
         const offer = await webrtcManager.createGroupOffer(memberSocketId, (to, candidate) => {
           socket.emit('group-ice-candidate', { to, candidate });
@@ -116,7 +117,7 @@ function initSocketConnection(tgId, webrtcManager) {
 
   socket.on('group-peer-joined', (data) => {
     showToast(`👥 ${data.peerProfile?.firstName || 'Yangi a\'zo'} guruhga qo\'shildi!`);
-    addGroupVideoTile(data.peerSocketId, data.peerProfile);
+    addGroupVideoTile(data.peerSocketId, data.peerProfile, !!data.isCreator);
   });
 
   socket.on('group-offer', async (data) => {

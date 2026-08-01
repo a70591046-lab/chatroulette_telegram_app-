@@ -674,9 +674,10 @@ function showGroupRoomState(data) {
 
     let myBadge = '';
     if (isAdmin) {
-      myBadge = `<span class="ega-badge">👑 EGA</span>`;
-    } else if (isCreator) {
-      myBadge = `<span class="bg-purple-600 text-white text-[9px] font-bold px-1 rounded ml-1">⭐ Admin</span>`;
+      myBadge += `<span class="ega-badge">👑 EGA</span>`;
+    }
+    if (isCreator) {
+      myBadge += `<span class="bg-purple-600 text-white text-[9px] font-bold px-1 rounded ml-1">⭐ Admin</span>`;
     }
 
     myTile.innerHTML = `
@@ -718,7 +719,7 @@ function kickGroupMember(targetSocketId) {
   }
 }
 
-function addGroupVideoTile(socketId, profile) {
+function addGroupVideoTile(socketId, profile, isTileCreator) {
   const grid = document.getElementById('groupVideoGrid');
   if (!grid || document.getElementById(`group_tile_${socketId}`)) return;
   const tile = document.createElement('div');
@@ -730,7 +731,7 @@ function addGroupVideoTile(socketId, profile) {
   const canIControl = isMeEga || isMeCreator;
 
   const isTargetEga = ADMIN_TELEGRAM_IDS.includes(String(profile?.tgId));
-  const isTargetCreator = (currentGroupCreatorSocketId === socketId);
+  const isTargetCreator = !!isTileCreator || (currentGroupCreatorSocketId === socketId);
 
   // KICK BUTTON: Render ONLY if I have admin authority AND target is NOT EGA!
   let kickHtml = '';
@@ -748,9 +749,10 @@ function addGroupVideoTile(socketId, profile) {
 
   let peerBadge = '';
   if (isTargetEga) {
-    peerBadge = `<span class="ega-badge">👑 EGA</span>`;
-  } else if (isTargetCreator) {
-    peerBadge = `<span class="bg-purple-600 text-white text-[9px] font-bold px-1 rounded ml-1">⭐ Admin</span>`;
+    peerBadge += `<span class="ega-badge">👑 EGA</span>`;
+  }
+  if (isTargetCreator) {
+    peerBadge += `<span class="bg-purple-600 text-white text-[9px] font-bold px-1 rounded ml-1">⭐ Admin</span>`;
   }
 
   tile.innerHTML = `
