@@ -50,6 +50,11 @@ function initSocketConnection(tgId, webrtcManager) {
     hideSearchingState();
     showVideoRoomState(data.peerProfile);
 
+    // Make sure local stream exists BEFORE creating peer connection
+    if (!webrtcManager.localStream || !webrtcManager.localStream.active) {
+      await webrtcManager.initLocalStream();
+    }
+
     if (data.isInitiator) {
       try {
         const offer = await webrtcManager.createOffer();
@@ -58,6 +63,7 @@ function initSocketConnection(tgId, webrtcManager) {
         console.error('[WebRTC] Create offer error:', e);
       }
     }
+    // Non-initiator: wait for webrtc-offer event
   });
 
   // ── Peer mic/cam toggle signals ─────────────────
@@ -209,6 +215,10 @@ function initSocketConnection(tgId, webrtcManager) {
   socket.on('webrtc-offer', async (data) => {
     console.log('[WebRTC] Received offer');
     try {
+      // Ensure local stream before handling offer
+      if (!webrtcManager.localStream || !webrtcManager.localStream.active) {
+        await webrtcManager.initLocalStream();
+      }
       const answer = await webrtcManager.handleOffer(data.sdp);
       socket.emit('webrtc-answer', { sdp: answer });
     } catch (e) {

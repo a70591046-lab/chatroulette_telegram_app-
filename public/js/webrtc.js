@@ -69,22 +69,31 @@ class WebRTCManager {
 
   // 1-on-1 Mode Connection
   createPeerConnection() {
-    this.closePeerConnection();
+    // Close old connections without killing group ones
+    if (this.peerConnection) {
+      this.peerConnection.close();
+      this.peerConnection = null;
+    }
 
     this.peerConnection = new RTCPeerConnection({ iceServers: this.iceServers });
     this.remoteStream = new MediaStream();
-    if (this.onRemoteStreamReady) this.onRemoteStreamReady(this.remoteStream);
 
+    // Add local tracks — MUST happen before creating offer/answer
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => {
-        this.peerConnection.addTrack(track, this.localStream);
+        try {
+          this.peerConnection.addTrack(track, this.localStream);
+        } catch(e) {
+          console.warn('[WebRTC] addTrack error:', e);
+        }
       });
     }
 
     this.peerConnection.ontrack = (event) => {
-      if (event.streams && event.streams[0]) {
-        event.streams[0].getTracks().forEach(track => {
-          if (!this.remoteStream.getTracks().includes(track)) {
+      const stream = (event.streams && event.streams[0]) ? event.streams[0] : null;
+      if (stream) {
+        stream.getTracks().forEach(track => {
+          if (!this.remoteStream.getTracks().find(t => t.id === track.id)) {
             this.remoteStream.addTrack(track);
           }
         });
@@ -92,18 +101,25 @@ class WebRTCManager {
         this.remoteStream.addTrack(event.track);
       }
 
+      // Always rebind the video element to ensure it renders
       const remoteVid = document.getElementById('remoteVideo');
       if (remoteVid) {
         remoteVid.srcObject = this.remoteStream;
         remoteVid.muted = false;
-        remoteVid.play().catch(e => console.warn('Remote video play error:', e));
+        remoteVid.play().catch(e => console.warn('[WebRTC] remoteVideo play error:', e));
       }
+
+      if (this.onRemoteStreamReady) this.onRemoteStreamReady(this.remoteStream);
     };
 
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate && this.onIceCandidate) {
         this.onIceCandidate(event.candidate);
       }
+    };
+
+    this.peerConnection.onconnectionstatechange = () => {
+      console.log('[WebRTC] Connection state:', this.peerConnection?.connectionState);
     };
 
     return this.peerConnection;
