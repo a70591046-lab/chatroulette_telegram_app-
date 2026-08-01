@@ -162,7 +162,16 @@ function initSocketConnection(tgId, webrtcManager) {
     };
     const g = gifts[data.giftType] || { emoji: '🎁', label: 'Sovg\'a' };
     const sender = data.fromName || 'Suhbatdosh';
-    const mainTitle = data.mode === 'group' ? `${sender} guruhga sovg'a yubordi!` : `${sender} sizga sovg'a yubordi!`;
+    let mainTitle = `${sender} sizga sovg'a yubordi!`;
+    if (data.mode === 'group') {
+      mainTitle = `${sender} guruhga sovg'a yubordi!`;
+    } else if (data.mode === 'group-targeted') {
+      if (data.isRecipient) {
+        mainTitle = `🎁 ${sender} sizga ${g.label} yubordi!`;
+      } else {
+        mainTitle = `🎁 ${sender} → ${data.toName || 'A\'zo'}ga ${g.label} yubordi!`;
+      }
+    }
 
     // Show received banner
     const banner = document.createElement('div');

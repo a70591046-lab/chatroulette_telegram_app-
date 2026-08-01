@@ -274,7 +274,32 @@ function setupWebRTCSignaling(io) {
       const fromUser  = db.getUser(fromTgId);
       const fromName  = fromUser ? fromUser.firstName : 'Foydalanuvchi';
 
-      if (mode === 'group') {
+      if (mode === 'group-targeted' && data.targetSocketId) {
+        // Targeted gift to a specific person in the group
+        const roomId = matchmaking.getUserGroupRoom(socket.id);
+        if (roomId) {
+          const members = matchmaking.getGroupRoomMembers(roomId);
+          const targetSocket = io.sockets.sockets.get(data.targetSocketId);
+          const targetTgId = targetSocket ? targetSocket.handshake.query.tgId : data.targetTgId;
+          const targetUser = db.getUser(targetTgId);
+          const targetName = targetUser ? targetUser.firstName : (data.targetName || 'A\'zo');
+
+          members.forEach(memberId => {
+            if (memberId !== socket.id) {
+              const isRecipient = (memberId === data.targetSocketId);
+              io.to(memberId).emit('received-gift', {
+                giftType,
+                fromTgId,
+                fromName,
+                toName: targetName,
+                mode: 'group-targeted',
+                isRecipient
+              });
+            }
+          });
+          db.logGift({ fromTgId, toTgId: targetTgId || 'group:' + roomId, giftType, mode: 'group-targeted' });
+        }
+      } else if (mode === 'group') {
         // Broadcast to everyone in the same group room
         const roomId = matchmaking.getUserGroupRoom(socket.id);
         if (roomId) {

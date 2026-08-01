@@ -411,11 +411,33 @@
     </div>
   </div>
 
+  <!-- Sponsor Channel Lock Modal -->
+  <div id="sponsorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
+    <div class="glass-panel w-full max-w-sm rounded-3xl p-6 text-center border border-purple-500/30 shadow-2xl">
+      <div class="w-16 h-16 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center text-3xl mx-auto mb-3 animate-bounce">
+        📢
+      </div>
+      <h3 class="text-lg font-extrabold text-white mb-1">Premium Sovg'alarni Ochish</h3>
+      <p class="text-xs text-slate-300 mb-4">Barcha premium sovg'alardan foydalanish uchun rasmiy kanallarga a'zo bo'ling:</p>
+      
+      <div id="sponsorChannelsContainer" class="space-y-2 mb-5 max-h-48 overflow-y-auto"></div>
+
+      <div class="flex gap-2">
+        <button onclick="document.getElementById('sponsorModal').classList.add('hidden')" class="flex-1 py-2.5 rounded-2xl bg-white/10 text-slate-300 text-xs font-bold hover:bg-white/20 transition">
+          Yopish
+        </button>
+        <button onclick="checkSponsorSubscription()" class="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white text-xs font-extrabold shadow-lg hover:brightness-110 active:scale-95 transition">
+          ✅ Tekshirish
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Application Scripts -->
   <script src="js/i18n.js?v=2"></script>
-  <script src="js/webrtc.js?v=2.5"></script>
-  <script src="js/socket.js?v=2.5"></script>
-  <script src="js/app.js?v=2.5"></script>
+  <script src="js/webrtc.js?v=2.6"></script>
+  <script src="js/socket.js?v=2.6"></script>
+  <script src="js/app.js?v=2.6"></script>
 </body>
 </html>
 

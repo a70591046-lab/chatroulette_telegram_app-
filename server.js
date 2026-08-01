@@ -187,6 +187,58 @@ app.get('/api/admin/gifts', adminAuth, (req, res) => {
   res.json({ success: true, gifts });
 });
 
+// GET /api/admin/sponsors
+app.get('/api/admin/sponsors', adminAuth, (req, res) => {
+  res.json({ success: true, sponsors: db.getSponsors() });
+});
+
+// POST /api/admin/sponsors/add
+app.post('/api/admin/sponsors/add', adminAuth, (req, res) => {
+  const { channelId, title, link } = req.body;
+  if (!channelId) return res.status(400).json({ success: false, message: 'Channel ID is required' });
+  const sponsors = db.addSponsor(channelId, title, link);
+  res.json({ success: true, sponsors });
+});
+
+// POST /api/admin/sponsors/delete
+app.post('/api/admin/sponsors/delete', adminAuth, (req, res) => {
+  const { channelId } = req.body;
+  if (!channelId) return res.status(400).json({ success: false });
+  db.removeSponsor(channelId);
+  res.json({ success: true, sponsors: db.getSponsors() });
+});
+
+// GET /api/sponsors (Public API for WebApp)
+app.get('/api/sponsors', (req, res) => {
+  res.json({ success: true, sponsors: db.getSponsors() });
+});
+
+// POST /api/sponsors/check (Public check subscription)
+app.post('/api/sponsors/check', async (req, res) => {
+  const { tgId } = req.body;
+  if (!tgId) return res.json({ success: false, subscribed: false });
+  const sponsors = db.getSponsors();
+  if (!sponsors || sponsors.length === 0) return res.json({ success: true, subscribed: true });
+  
+  const botMod = require('./bot/bot');
+  const bot = botMod.getBotInstance();
+  if (!bot) return res.json({ success: true, subscribed: true });
+
+  let subscribed = true;
+  for (const s of sponsors) {
+    try {
+      const member = await bot.telegram.getChatMember(s.id, tgId);
+      if (['left', 'kicked', 'restricted'].includes(member.status)) {
+        subscribed = false;
+        break;
+      }
+    } catch (e) {
+      console.warn(`Check chat member error for ${s.id}:`, e.message);
+    }
+  }
+  res.json({ success: true, subscribed });
+});
+
 // ──────────────────────────────────────────────────────────────────────────
 
 let botInstance = null;

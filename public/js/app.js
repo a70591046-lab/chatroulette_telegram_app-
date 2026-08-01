@@ -560,6 +560,15 @@ function showGroupRoomState(data) {
   }
 }
 
+let selectedGroupTarget = null;
+
+window.openTargetedGiftModal = function(socketId, name, tgId) {
+  selectedGroupTarget = { socketId, name, tgId };
+  const titleEl = document.querySelector('#giftModal h3');
+  if (titleEl) titleEl.innerText = `🎁 ${name} ga sovg'a yuborish`;
+  document.getElementById('giftModal')?.classList.remove('hidden');
+};
+
 function addGroupVideoTile(socketId, profile) {
   const grid = document.getElementById('groupVideoGrid');
   if (!grid || document.getElementById(`group_tile_${socketId}`)) return;
@@ -570,11 +579,14 @@ function addGroupVideoTile(socketId, profile) {
   const isAdmin = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
   const kickHtml = isAdmin ? `<button onclick="kickUserFromGroup('${socketId}')" class="absolute top-2 right-2 z-50 text-red-400 bg-slate-900/80 hover:bg-red-500 hover:text-white p-2 rounded-full shadow-lg transition-all" title="Chopish (Admin)"><i class="fas fa-times"></i></button>` : '';
 
+  const giftHtml = `<button onclick="openTargetedGiftModal('${socketId}', '${profile?.firstName || 'A\'zo'}', '${profile?.tgId || ''}')" class="absolute top-2 left-2 z-40 text-pink-400 bg-slate-900/80 hover:bg-pink-500 hover:text-white p-2 rounded-full shadow-lg transition-all" title="Sovg'a yuborish"><i class="fas fa-gift"></i></button>`;
+
   const isPeerAdmin = ADMIN_TELEGRAM_IDS.includes(String(profile?.tgId));
   const peerBadge = isPeerAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 ADMIN</span>` : '';
 
   tile.innerHTML = `
     ${kickHtml}
+    ${giftHtml}
     <video id="group_vid_${socketId}" autoplay playsinline></video>
     <div class="group-tile-badge">
       <span class="text-xs font-bold text-cyan-300">${profile?.firstName || 'A\'zo'} ${peerBadge}</span>
@@ -705,14 +717,48 @@ window.kickUserFromGroup = function(socketId) {
 };
 
 // Called from inline onclick in Gift Modal HTML
-window.sendGift = function(giftType) {
+window.sendGift = async function(giftType) {
   document.getElementById('giftModal')?.classList.add('hidden');
   
   if (!socket) {
     showToast('⚠️ Ulanish yo\'q!');
     return;
   }
+
+  // Premium gifts require sponsor check if sponsors exist
+  const premiumGifts = ['car', 'crown', 'diamond', 'cake', 'firework', 'ring'];
+  if (premiumGifts.includes(giftType) && tgUser) {
+    try {
+      const res = await fetch(`${BACKEND_API_URL}/api/sponsors/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tgId: tgUser.tgId })
+      }).then(r => r.json());
+
+      if (res && res.success && !res.subscribed) {
+        showSponsorModal();
+        return;
+      }
+    } catch(e) {}
+  }
   
+  if (selectedGroupTarget && activeChatMode === 'group') {
+    socket.emit('send-gift', {
+      fromTgId: tgUser ? tgUser.tgId : null,
+      targetSocketId: selectedGroupTarget.socketId,
+      targetTgId: selectedGroupTarget.tgId,
+      targetName: selectedGroupTarget.name,
+      giftType: giftType,
+      mode: 'group-targeted'
+    });
+    showToast(`🎁 ${selectedGroupTarget.name} ga sovg'a yuborildi!`);
+    if (typeof playGiftAnimation === 'function') {
+      playGiftAnimation(giftType);
+    }
+    selectedGroupTarget = null;
+    return;
+  }
+
   if (activeChatMode === 'group') {
     socket.emit('send-gift', {
       fromTgId: tgUser ? tgUser.tgId : null,
@@ -741,5 +787,53 @@ window.sendGift = function(giftType) {
     if (typeof playGiftAnimation === 'function') {
       playGiftAnimation(giftType);
     }
+  }
+};
+
+window.showSponsorModal = async function() {
+  const modal = document.getElementById('sponsorModal');
+  const container = document.getElementById('sponsorChannelsContainer');
+  if (!modal || !container) return;
+
+  container.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">⏳ Kanallar yuklanmoqda...</div>';
+  modal.classList.remove('hidden');
+
+  try {
+    const res = await fetch(`${BACKEND_API_URL}/api/sponsors`).then(r => r.json());
+    if (res.success && res.sponsors && res.sponsors.length > 0) {
+      container.innerHTML = res.sponsors.map(s => `
+        <div class="flex items-center justify-between p-3 glass rounded-xl border border-white/10">
+          <div class="font-bold text-sm text-white">${s.title || s.id}</div>
+          <a href="${s.link}" target="_blank" class="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-cyan-500 hover:brightness-110 text-white rounded-xl text-xs font-bold transition">
+            📢 A'zo bo'lish
+          </a>
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">Xomaki kanallar topilmadi</div>';
+    }
+  } catch(e) {
+    container.innerHTML = '<div class="text-xs text-red-400 text-center py-4">Xatolik yuz berdi</div>';
+  }
+};
+
+window.checkSponsorSubscription = async function() {
+  if (!tgUser) return;
+  showToast('⏳ Tekshirilmoqda...');
+  try {
+    const res = await fetch(`${BACKEND_API_URL}/api/sponsors/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tgId: tgUser.tgId })
+    }).then(r => r.json());
+
+    if (res && res.subscribed) {
+      document.getElementById('sponsorModal')?.classList.add('hidden');
+      showToast('🎉 Rahmat! Barcha sovg\'alar ochildi!');
+    } else {
+      showToast('❌ Hali barcha kanallarga a\'zo bo\'lmadingiz!');
+    }
+  } catch(e) {
+    showToast('⚠️ Tekshirishda xatolik!');
   }
 };

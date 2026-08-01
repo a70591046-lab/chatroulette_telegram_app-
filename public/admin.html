@@ -112,6 +112,9 @@
       <button onclick="showTab('gifts')" class="nav-item text-left px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-3" id="nav-gifts">
         <i class="fas fa-gift w-4 text-pink-400"></i> Sovg'alar Tarixi
       </button>
+      <button onclick="showTab('sponsors')" class="nav-item text-left px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-3" id="nav-sponsors">
+        <i class="fas fa-bullhorn w-4 text-emerald-400"></i> Majburiy Obunalar
+      </button>
     </nav>
 
     <div class="mt-auto pt-4 border-t border-white/5">
@@ -315,6 +318,42 @@
       </div>
     </div>
 
+    <!-- SPONSORS TAB -->
+    <div id="tab-sponsors" class="hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Add Sponsor Form -->
+        <div class="glass rounded-2xl p-6 h-fit">
+          <h3 class="font-bold text-emerald-400 text-lg mb-4 flex items-center gap-2"><i class="fas fa-plus-circle"></i> Yangi Kanal Qo'shish</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs text-slate-400 mb-1 block">Kanal ID yoki Username (@...)</label>
+              <input type="text" id="spId" placeholder="@mychannel yoki -100123456789">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 mb-1 block">Kanal Nomi (Sarlavha)</label>
+              <input type="text" id="spTitle" placeholder="Masalan: Rasmiy Kanal">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 mb-1 block">Taklif Havolasi (Invite Link)</label>
+              <input type="text" id="spLink" placeholder="https://t.me/mychannel">
+            </div>
+            <button onclick="addSponsor()" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-500 font-bold text-sm hover:brightness-110 active:scale-95 transition">
+              <i class="fas fa-plus mr-2"></i>Qo'shish
+            </button>
+          </div>
+        </div>
+
+        <!-- Sponsor List -->
+        <div class="lg:col-span-2 glass rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-white text-lg flex items-center gap-2"><i class="fas fa-list"></i> Majburiy Obuna Kanallari</h3>
+            <button onclick="loadSponsors()" class="text-xs glass px-3 py-1.5 rounded-xl text-slate-300 hover:text-white"><i class="fas fa-sync-alt"></i> Yangilash</button>
+          </div>
+          <div id="sponsorsListContainer" class="space-y-3"></div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -380,7 +419,7 @@
   });
 
   function showTab(tab) {
-    ['dashboard','users','banned','broadcast','gifts'].forEach(t => {
+    ['dashboard','users','banned','broadcast','gifts','sponsors'].forEach(t => {
       document.getElementById(`tab-${t}`).classList.add('hidden');
       document.getElementById(`nav-${t}`).classList.remove('active');
     });
@@ -391,13 +430,15 @@
       users: ['Foydalanuvchilar', 'Barcha ro\'yxatdan o\'tgan foydalanuvchilar'],
       banned: ['Bloklangan', 'Platformadan ban qilingan foydalanuvchilar'],
       broadcast: ['Xabar Tarqatish', 'Barcha foydalanuvchilarga xabar yuborish'],
-      gifts: ['Sovg\'alar Tarixi', 'Kim kimga qanday sovg\'a yuborgani logi']
+      gifts: ['Sovg\'alar Tarixi', 'Kim kimga qanday sovg\'a yuborgani logi'],
+      sponsors: ['Majburiy Obunalar', 'Foydalanuvchilar a\'zo bo\'lishi shart bo\'lgan kanallar']
     };
     document.getElementById('pageTitle').textContent = titles[tab][0];
     document.getElementById('pageSubtitle').textContent = titles[tab][1];
     if (tab === 'users') loadUsers();
     if (tab === 'banned') loadBanned();
     if (tab === 'gifts') loadGifts();
+    if (tab === 'sponsors') loadSponsors();
   }
 
   async function api(path, opts = {}) {
@@ -581,14 +622,71 @@
               <td class="py-3 px-4 font-medium text-white">${g.fromName}</td>
               <td class="py-3 px-4 font-medium text-white">${g.toName}</td>
               <td class="py-3 px-4">
-                <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${g.mode === 'group' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'}">
-                  ${g.mode === 'group' ? '👥 Guruh' : '👤 1-ga-1'}
+                <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${g.mode.includes('group') ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'}">
+                  ${g.mode === 'group-targeted' ? '👥 Guruh (Aniq a\'zoga)' : (g.mode === 'group' ? '👥 Guruh' : '👤 1-ga-1')}
                 </span>
               </td>
               <td class="py-3 px-4 text-xs text-slate-400 font-mono">${new Date(g.timestamp).toLocaleString('uz-UZ')}</td>
             </tr>
           `).join('')
         : '<tr><td colspan="5" class="py-8 text-center text-slate-500">Hali sovg\'a yuborilmadi</td></tr>';
+    }
+  }
+
+  async function loadSponsors() {
+    const res = await api('/api/admin/sponsors');
+    if (res.success) {
+      const container = document.getElementById('sponsorsListContainer');
+      if (!container) return;
+      container.innerHTML = res.sponsors.length
+        ? res.sponsors.map(s => `
+            <div class="flex items-center justify-between p-4 glass rounded-xl border border-white/5">
+              <div>
+                <div class="font-bold text-white text-base">${s.title || s.id}</div>
+                <div class="text-xs text-slate-400 font-mono mt-0.5">${s.id} — <a href="${s.link}" target="_blank" class="text-cyan-400 underline">${s.link}</a></div>
+              </div>
+              <button onclick="deleteSponsor('${s.id}')" class="px-3 py-1.5 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold hover:bg-red-500/40 transition">
+                <i class="fas fa-trash-alt mr-1"></i>O'chirish
+              </button>
+            </div>
+          `).join('')
+        : '<div class="py-8 text-center text-slate-500">Hali majburiy obuna kanali qo\'shilmagan</div>';
+    }
+  }
+
+  async function addSponsor() {
+    const channelId = document.getElementById('spId').value.trim();
+    const title = document.getElementById('spTitle').value.trim();
+    const link = document.getElementById('spLink').value.trim();
+
+    if (!channelId) {
+      alert('Kanal ID yoki Username ni kiriting!');
+      return;
+    }
+
+    const res = await api('/api/admin/sponsors/add', {
+      method: 'POST',
+      body: JSON.stringify({ channelId, title, link })
+    });
+
+    if (res.success) {
+      showNotif('✅ Kanal muvaffaqiyatli qo\'shildi!', 'green');
+      document.getElementById('spId').value = '';
+      document.getElementById('spTitle').value = '';
+      document.getElementById('spLink').value = '';
+      loadSponsors();
+    }
+  }
+
+  async function deleteSponsor(channelId) {
+    if (!confirm(`${channelId} kanalini o'chirasizmi?`)) return;
+    const res = await api('/api/admin/sponsors/delete', {
+      method: 'POST',
+      body: JSON.stringify({ channelId })
+    });
+    if (res.success) {
+      showNotif('✅ Kanal o\'chirildi!', 'green');
+      loadSponsors();
     }
   }
 
