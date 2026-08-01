@@ -554,6 +554,13 @@ function showVideoRoomState(peerProfile) {
   document.getElementById('activeCallView')?.classList.remove('hidden');
   document.getElementById('leaveChatTopBtn')?.classList.remove('hidden');
 
+  const localVid = document.getElementById('localVideo');
+  if (localVid && webrtc && webrtc.localStream) {
+    localVid.srcObject = webrtc.localStream;
+    localVid.muted = true;
+    localVid.play().catch(() => {});
+  }
+
   if (peerProfile) {
     const nameEl = document.getElementById('peerNameTag');
     const hobbiesEl = document.getElementById('peerHobbiesTag');
