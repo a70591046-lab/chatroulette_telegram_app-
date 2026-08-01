@@ -10,6 +10,9 @@ const BACKEND_API_URL = 'https://web-production-65a7f.up.railway.app';
 const ADMIN_TELEGRAM_IDS = ['7713174177', '123456789'];
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Show welcome mode modal immediately
+  if (typeof showWelcomeModal === 'function') showWelcomeModal();
+
   // Telegram WebApp SDK
   if (window.Telegram && window.Telegram.WebApp) {
     try {
