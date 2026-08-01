@@ -78,15 +78,28 @@ function setupWebRTCSignaling(io) {
       const res = matchmaking.joinGroupRoom(socket.id, tgId, profile);
 
       socket.join(res.roomId);
+
+      const existingMemberProfiles = res.members.map(mSocketId => {
+        const mSocket = io.sockets.sockets.get(mSocketId);
+        const mTgId = mSocket ? mSocket.handshake.query.tgId : null;
+        const mUser = mTgId ? db.getUser(mTgId) : null;
+        return {
+          socketId: mSocketId,
+          profile: Object.assign({}, mUser || { firstName: 'Guruh A\'zosi' }, { tgId: mTgId })
+        };
+      });
+
+      const myProfileFull = Object.assign({}, db.getUser(tgId) || profile, { tgId: String(tgId) });
+
       socket.emit('group-joined', {
         roomId: res.roomId,
-        existingMembers: res.members,
-        myProfile: db.getUser(tgId) || profile
+        existingMembers: existingMemberProfiles,
+        myProfile: myProfileFull
       });
 
       socket.to(res.roomId).emit('group-peer-joined', {
         peerSocketId: socket.id,
-        peerProfile: db.getUser(tgId) || profile
+        peerProfile: myProfileFull
       });
     });
 

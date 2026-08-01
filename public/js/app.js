@@ -523,7 +523,7 @@ function showVideoRoomState(peerProfile) {
     let nameHtml = `${peerProfile.firstName || 'Suhbatdosh'}, ${peerProfile.age || 20}`;
     const isPeerAdmin = ADMIN_TELEGRAM_IDS.includes(String(peerProfile.tgId));
     if (isPeerAdmin) {
-      nameHtml += ` <span class="bg-amber-500 text-white text-[10px] font-bold px-1 rounded ml-1">👑 ADMIN</span>`;
+      nameHtml += ` <span class="bg-amber-500 text-white text-[10px] font-bold px-1 rounded ml-1">👑 EGA</span>`;
     }
     
     if (nameEl) nameEl.innerHTML = nameHtml;
@@ -544,7 +544,7 @@ function showGroupRoomState(data) {
     const myTile = document.createElement('div');
     myTile.className = 'group-video-item';
     const isAdmin = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
-    const myBadge = isAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 ADMIN</span>` : '';
+    const myBadge = isAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 EGA</span>` : '';
 
     myTile.innerHTML = `
       <video autoplay playsinline muted></video>
@@ -577,12 +577,12 @@ function addGroupVideoTile(socketId, profile) {
   tile.className = 'group-video-item relative';
   
   const isAdmin = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
-  const kickHtml = isAdmin ? `<button onclick="kickUserFromGroup('${socketId}')" class="absolute top-2 right-2 z-50 text-red-400 bg-slate-900/80 hover:bg-red-500 hover:text-white p-2 rounded-full shadow-lg transition-all" title="Chopish (Admin)"><i class="fas fa-times"></i></button>` : '';
+  const kickHtml = isAdmin ? `<button onclick="kickUserFromGroup('${socketId}')" class="absolute top-2 right-2 z-50 text-red-400 bg-slate-900/80 hover:bg-red-500 hover:text-white p-2 rounded-full shadow-lg transition-all" title="Chopish (Ega)"><i class="fas fa-times"></i></button>` : '';
 
   const giftHtml = `<button onclick="openTargetedGiftModal('${socketId}', '${profile?.firstName || 'A\'zo'}', '${profile?.tgId || ''}')" class="absolute top-2 left-2 z-40 text-pink-400 bg-slate-900/80 hover:bg-pink-500 hover:text-white p-2 rounded-full shadow-lg transition-all" title="Sovg'a yuborish"><i class="fas fa-gift"></i></button>`;
 
   const isPeerAdmin = ADMIN_TELEGRAM_IDS.includes(String(profile?.tgId));
-  const peerBadge = isPeerAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 ADMIN</span>` : '';
+  const peerBadge = isPeerAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 EGA</span>` : '';
 
   tile.innerHTML = `
     ${kickHtml}

@@ -81,8 +81,10 @@ function initSocketConnection(tgId, webrtcManager) {
     hideSearchingState();
     showGroupRoomState(data);
 
-    for (const memberSocketId of data.existingMembers) {
-      addGroupVideoTile(memberSocketId, { firstName: 'Guruh A\'zosi' });
+    for (const mem of data.existingMembers) {
+      const memberSocketId = typeof mem === 'object' ? mem.socketId : mem;
+      const memberProfile  = typeof mem === 'object' ? mem.profile  : { firstName: 'Guruh A\'zosi' };
+      addGroupVideoTile(memberSocketId, memberProfile);
       try {
         const offer = await webrtcManager.createGroupOffer(memberSocketId, (to, candidate) => {
           socket.emit('group-ice-candidate', { to, candidate });
