@@ -587,21 +587,24 @@ function showGroupRoomState(data) {
   if (grid) {
     grid.innerHTML = '';
     const myTile = document.createElement('div');
-    myTile.className = 'group-video-item';
+    myTile.className = 'group-tile';
     const isAdmin = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
-    const myBadge = isAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 EGA</span>` : '';
+    const myBadge = isAdmin ? `<span class="ega-badge">👑 EGA</span>` : '';
 
     myTile.innerHTML = `
       <video autoplay playsinline muted></video>
-      <div class="group-tile-badge">
-        <span class="text-xs font-bold text-purple-300">Siz ${myBadge}</span>
-        <span id="mic_status_self" class="text-xs text-emerald-400"><i class="fas fa-microphone"></i></span>
+      <div class="group-tile-name">
+        <span>Siz ${myBadge}</span>
+        <span id="mic_status_self"><i class="fas fa-microphone"></i></span>
       </div>
     `;
     const v = myTile.querySelector('video');
-    if (webrtc.localStream) v.srcObject = webrtc.localStream;
+    if (webrtc && webrtc.localStream) {
+      v.srcObject = webrtc.localStream;
+      v.play().catch(() => {});
+    }
     grid.appendChild(myTile);
-    updateGroupMemberBadge();
+    updateGroupGridLayout();
   }
 }
 
@@ -619,37 +622,48 @@ function addGroupVideoTile(socketId, profile) {
   if (!grid || document.getElementById(`group_tile_${socketId}`)) return;
   const tile = document.createElement('div');
   tile.id = `group_tile_${socketId}`;
-  tile.className = 'group-video-item relative';
-  
-  const isAdmin = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
-  const kickHtml = isAdmin ? `<button onclick="kickUserFromGroup('${socketId}')" class="absolute top-2 right-2 z-50 text-red-400 bg-slate-900/80 hover:bg-red-500 hover:text-white p-2 rounded-full shadow-lg transition-all" title="Chopish (Ega)"><i class="fas fa-times"></i></button>` : '';
+  tile.className = 'group-tile';
 
-  const giftHtml = `<button onclick="openTargetedGiftModal('${socketId}', '${profile?.firstName || 'A\'zo'}', '${profile?.tgId || ''}')" class="absolute top-2 left-2 z-40 text-pink-400 bg-slate-900/80 hover:bg-pink-500 hover:text-white p-2 rounded-full shadow-lg transition-all" title="Sovg'a yuborish"><i class="fas fa-gift"></i></button>`;
+  const isOwner = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
+  const kickHtml = isOwner
+    ? `<button onclick="kickUserFromGroup('${socketId}')" class="group-tile-kick" title="Chiqarish"><i class="fas fa-times"></i></button>`
+    : '';
+
+  const giftHtml = `<button onclick="openTargetedGiftModal('${socketId}', '${(profile?.firstName || 'Azvo').replace(/'/g, "&#39;")}', '${profile?.tgId || ''}')" class="group-tile-gift" title="Sovg'a"><i class="fas fa-gift"></i></button>`;
 
   const isPeerAdmin = ADMIN_TELEGRAM_IDS.includes(String(profile?.tgId));
-  const peerBadge = isPeerAdmin ? `<span class="bg-amber-500 text-white text-[9px] font-bold px-1 rounded ml-1">👑 EGA</span>` : '';
+  const peerBadge = isPeerAdmin ? `<span class="ega-badge">👑 EGA</span>` : '';
 
   tile.innerHTML = `
     ${kickHtml}
     ${giftHtml}
     <video id="group_vid_${socketId}" autoplay playsinline></video>
-    <div class="group-tile-badge">
-      <span class="text-xs font-bold text-cyan-300">${profile?.firstName || 'A\'zo'} ${peerBadge}</span>
-      <span id="mic_status_${socketId}" class="text-xs text-emerald-400"><i class="fas fa-microphone"></i></span>
+    <div class="group-tile-name">
+      <span>${profile?.firstName || 'A\'zo'} ${peerBadge}</span>
+      <span id="mic_status_${socketId}"><i class="fas fa-microphone"></i></span>
     </div>
   `;
   grid.appendChild(tile);
-  updateGroupMemberBadge();
+  updateGroupGridLayout();
 }
 
 function removeGroupVideoTile(socketId) {
   document.getElementById(`group_tile_${socketId}`)?.remove();
-  updateGroupMemberBadge();
+  updateGroupGridLayout();
 }
 
-function updateGroupMemberBadge() {
+function updateGroupGridLayout() {
   const grid = document.getElementById('groupVideoGrid');
-  const count = grid ? grid.children.length : 1;
+  if (!grid) return;
+  const count = grid.children.length;
+  // Remove all count classes
+  grid.classList.remove('count-1', 'count-2', 'count-3', 'count-4', 'count-many');
+  if (count <= 1)      grid.classList.add('count-1');
+  else if (count === 2) grid.classList.add('count-2');
+  else if (count === 3) grid.classList.add('count-3');
+  else if (count === 4) grid.classList.add('count-4');
+  else                  grid.classList.add('count-many');
+
   const badge = document.getElementById('groupMemberCountBadge');
   if (badge) badge.innerText = `👥 ${count}/4 A'zo`;
 }
