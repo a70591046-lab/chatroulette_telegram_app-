@@ -208,7 +208,7 @@
         </div>
 
         <!-- State D: Active Group Video Chat Lounge -->
-        <div id="activeGroupView" class="w-full h-full hidden relative flex flex-col p-2">
+        <div id="activeGroupView" class="hidden" style="position:absolute;inset:0;display:none;flex-direction:column;padding:8px;box-sizing:border-box;">
           
           <!-- Top Group Bar -->
           <div class="glass-panel px-4 py-2 rounded-2xl mb-2 flex items-center justify-between z-20 flex-shrink-0">
@@ -217,7 +217,7 @@
           </div>
 
           <!-- Group Video 4-Grid Container -->
-          <div id="groupVideoGrid" class="group-grid flex-1">
+          <div id="groupVideoGrid" class="group-grid" style="flex:1;min-height:0;">
             <!-- Dynamic video tiles for up to 4 group members -->
           </div>
 
@@ -435,9 +435,9 @@
 
   <!-- Application Scripts -->
   <script src="js/i18n.js?v=2"></script>
-  <script src="js/webrtc.js?v=3.2"></script>
-  <script src="js/socket.js?v=3.2"></script>
-  <script src="js/app.js?v=3.2"></script>
+  <script src="js/webrtc.js?v=3.3"></script>
+  <script src="js/socket.js?v=3.3"></script>
+  <script src="js/app.js?v=3.3"></script>
 </body>
 </html>
 

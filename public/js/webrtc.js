@@ -165,19 +165,33 @@ class WebRTCManager {
     const pc = new RTCPeerConnection({ iceServers: this.iceServers });
     const remoteMediaStream = new MediaStream();
 
+    // Add local tracks — must happen before offer/answer
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => {
-        pc.addTrack(track, this.localStream);
+        try { pc.addTrack(track, this.localStream); } catch(e) {}
       });
     }
 
     pc.ontrack = (event) => {
-      if (event.streams && event.streams[0]) {
-        event.streams[0].getTracks().forEach(t => {
-          if (!remoteMediaStream.getTracks().includes(t)) remoteMediaStream.addTrack(t);
+      const incoming = (event.streams && event.streams[0]) ? event.streams[0] : null;
+      if (incoming) {
+        incoming.getTracks().forEach(t => {
+          if (!remoteMediaStream.getTracks().find(x => x.id === t.id)) {
+            remoteMediaStream.addTrack(t);
+          }
         });
-      } else {
-        remoteMediaStream.addTrack(event.track);
+      } else if (event.track) {
+        if (!remoteMediaStream.getTracks().find(x => x.id === event.track.id)) {
+          remoteMediaStream.addTrack(event.track);
+        }
+      }
+
+      // Bind directly to the video element
+      const vidEl = document.getElementById(`group_vid_${targetSocketId}`);
+      if (vidEl) {
+        vidEl.srcObject = remoteMediaStream;
+        vidEl.muted = false; // Remote audio should play — NOT muted
+        vidEl.play().catch(e => console.warn('[Group] Remote video play:', e));
       }
 
       if (this.onGroupRemoteTrack) {
@@ -189,6 +203,10 @@ class WebRTCManager {
       if (event.candidate && onIce) {
         onIce(targetSocketId, event.candidate);
       }
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log(`[Group] ${targetSocketId} state:`, pc.connectionState);
     };
 
     this.groupConnections.set(targetSocketId, pc);

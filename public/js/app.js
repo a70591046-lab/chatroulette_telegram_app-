@@ -580,7 +580,13 @@ function showGroupRoomState(data) {
   document.getElementById('initialMatchView')?.classList.add('hidden');
   document.getElementById('searchingRadarView')?.classList.add('hidden');
   document.getElementById('activeCallView')?.classList.add('hidden');
-  document.getElementById('activeGroupView')?.classList.remove('hidden');
+
+  // Use display:flex since the element uses inline style
+  const groupView = document.getElementById('activeGroupView');
+  if (groupView) {
+    groupView.style.display = 'flex';
+    groupView.classList.remove('hidden');
+  }
   document.getElementById('leaveChatTopBtn')?.classList.remove('hidden');
 
   const grid = document.getElementById('groupVideoGrid');
@@ -599,6 +605,7 @@ function showGroupRoomState(data) {
       </div>
     `;
     const v = myTile.querySelector('video');
+    v.muted = true; // MUST be muted — prevents local audio echo
     if (webrtc && webrtc.localStream) {
       v.srcObject = webrtc.localStream;
       v.play().catch(() => {});
@@ -671,7 +678,13 @@ function updateGroupGridLayout() {
 function resetVideoCallView() {
   document.getElementById('searchingRadarView')?.classList.add('hidden');
   document.getElementById('activeCallView')?.classList.add('hidden');
-  document.getElementById('activeGroupView')?.classList.add('hidden');
+
+  const groupView = document.getElementById('activeGroupView');
+  if (groupView) {
+    groupView.style.display = 'none';
+    groupView.classList.add('hidden');
+  }
+
   document.getElementById('initialMatchView')?.classList.remove('hidden');
   document.getElementById('leaveChatTopBtn')?.classList.add('hidden');
   const chatContainer = document.getElementById('chatOverlayContainer');
