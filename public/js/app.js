@@ -101,10 +101,23 @@ async function requestCameraMicPermission() {
   }
 }
 
-function startMatchmakingSearch() {
+async function startMatchmakingSearch() {
   if (!socket || !socket.connected) {
-    showToast('❌ Server bilan aloqa yo\'q, iltimos kuting...');
-    return;
+    showToast('⏳ Serverga ulanmoqda...');
+    if (socket && typeof socket.connect === 'function') {
+      socket.connect();
+    } else if (typeof initSocketConnection === 'function' && tgUser) {
+      initSocketConnection(tgUser.tgId, webrtc);
+    }
+    let waited = 0;
+    while ((!socket || !socket.connected) && waited < 20) {
+      await new Promise(r => setTimeout(r, 100));
+      waited++;
+    }
+    if (!socket || !socket.connected) {
+      showToast('❌ Server bilan aloqa yo\'q, iltimos sahifani yangilang');
+      return;
+    }
   }
 
   if (!currentProfile) {

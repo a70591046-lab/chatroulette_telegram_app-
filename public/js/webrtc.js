@@ -213,43 +213,49 @@ class WebRTCManager {
   }
 
   toggleCamera() {
-    if (this.localStream) {
-      const videoTrack = this.localStream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        this.isCameraOn = videoTrack.enabled;
-        return this.isCameraOn;
-      }
-    }
-    return false;
-  }
+    this.isCameraOn = !this.isCameraOn;
 
-  toggleMic() {
-    let newState = false;
     if (this.localStream) {
-      const audioTracks = this.localStream.getAudioTracks();
-      if (audioTracks.length > 0) {
-        newState = !audioTracks[0].enabled;
-        // 1) Disable/enable all audio tracks in the local stream
-        audioTracks.forEach(t => { t.enabled = newState; });
-        this.isMicOn = newState;
-      }
+      this.localStream.getVideoTracks().forEach(t => {
+        t.enabled = this.isCameraOn;
+      });
     }
 
-    // 2) CRITICAL: Also mute/unmute on all RTCPeerConnection senders
-    // Just disabling the track is not enough; we must also stop the sender's
-    // RTP stream so the remote end truly hears silence.
-    const muteAllSenders = (pc) => {
+    const updatePc = (pc) => {
       if (!pc) return;
       pc.getSenders().forEach(sender => {
-        if (sender.track && sender.track.kind === 'audio') {
-          sender.track.enabled = newState;
+        if (sender.track && sender.track.kind === 'video') {
+          sender.track.enabled = this.isCameraOn;
         }
       });
     };
 
-    muteAllSenders(this.peerConnection);
-    this.groupConnections.forEach(pc => muteAllSenders(pc));
+    updatePc(this.peerConnection);
+    this.groupConnections.forEach(pc => updatePc(pc));
+
+    return this.isCameraOn;
+  }
+
+  toggleMic() {
+    this.isMicOn = !this.isMicOn;
+
+    if (this.localStream) {
+      this.localStream.getAudioTracks().forEach(t => {
+        t.enabled = this.isMicOn;
+      });
+    }
+
+    const updatePc = (pc) => {
+      if (!pc) return;
+      pc.getSenders().forEach(sender => {
+        if (sender.track && sender.track.kind === 'audio') {
+          sender.track.enabled = this.isMicOn;
+        }
+      });
+    };
+
+    updatePc(this.peerConnection);
+    this.groupConnections.forEach(pc => updatePc(pc));
 
     return this.isMicOn;
   }

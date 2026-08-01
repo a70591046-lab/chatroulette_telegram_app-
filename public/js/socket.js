@@ -9,7 +9,9 @@ var currentPeerTgId = null;
 var currentRoomId = null;
 
 // Railway backend URL (Socket.io server)
-var BACKEND_URL = 'https://web-production-65a7f.up.railway.app';
+var BACKEND_URL = (window.location.origin && window.location.origin.startsWith('http')) 
+  ? window.location.origin 
+  : 'https://web-production-65a7f.up.railway.app';
 
 function initSocketConnection(tgId, webrtcManager) {
   if (socket && socket.connected) return socket;
