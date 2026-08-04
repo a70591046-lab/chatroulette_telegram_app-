@@ -88,8 +88,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }).catch(() => {});
 
-  // ALWAYS show welcome modal — let user pick solo/create-group/join-group
-  setTimeout(() => showWelcomeModal(), 200);
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramMode = urlParams.get('mode');
+
+  if (paramMode === 'create_group') {
+    setTimeout(() => {
+      const modal = document.getElementById('welcomeModeModal');
+      if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); }
+      createNewGroupRoom();
+    }, 200);
+  } else if (paramMode === 'join_group') {
+    setTimeout(() => {
+      openJoinGroupModal();
+    }, 200);
+  } else if (paramMode === 'solo') {
+    setTimeout(() => {
+      selectAppMode('solo');
+    }, 200);
+  } else {
+    // ALWAYS show welcome modal if no mode or standard mode
+    setTimeout(() => showWelcomeModal(), 200);
+  }
 });
 
 async function requestCameraMicPermission() {

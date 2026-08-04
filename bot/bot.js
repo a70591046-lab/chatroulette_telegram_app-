@@ -339,26 +339,32 @@ function initBot() {
       }
     }
 
+    const webAppUrlCreateGroup = `${config.WEBAPP_URL}?tgId=${tgId}&mode=create_group&t=${ts}`;
+    const webAppUrlJoinGroup = `${config.WEBAPP_URL}?tgId=${tgId}&mode=join_group&t=${ts}`;
+
     const inlineButtons = [];
 
     if (isHttps) {
       inlineButtons.push([
-        Markup.button.webApp('👤 1-ga-1 Chat', webAppUrlSolo),
-        Markup.button.webApp('👥 Guruh Chat', webAppUrlGroup)
+        Markup.button.webApp('👤 1-ga-1 Chat', webAppUrlSolo)
       ]);
       inlineButtons.push([
-        Markup.button.webApp('🚀 Mini App ni ochish', webAppUrlMain)
+        Markup.button.webApp('➕ Yangi Guruh Ochish', webAppUrlCreateGroup),
+        Markup.button.webApp('🔑 Guruhga Qo\'shilish', webAppUrlJoinGroup)
       ]);
       inlineButtons.push([
-        Markup.button.url('🌐 Brauzerda ochish', webAppUrlMain)
+        Markup.button.webApp('🚀 Asosiy Menyu', webAppUrlMain)
       ]);
     } else {
       inlineButtons.push([
-        Markup.button.url('👤 1-ga-1 Chat', webAppUrlSolo),
-        Markup.button.url('👥 Guruh Chat', webAppUrlGroup)
+        Markup.button.url('👤 1-ga-1 Chat', webAppUrlSolo)
       ]);
       inlineButtons.push([
-        Markup.button.url('🚀 Mini App ni ochish', webAppUrlMain)
+        Markup.button.url('➕ Yangi Guruh Ochish', webAppUrlCreateGroup),
+        Markup.button.url('🔑 Guruhga Qo\'shilish', webAppUrlJoinGroup)
+      ]);
+      inlineButtons.push([
+        Markup.button.url('🚀 Asosiy Menyu', webAppUrlMain)
       ]);
     }
 
@@ -372,8 +378,9 @@ function initBot() {
     
     const msgText = `${welcomeText}\n\n` +
       `📹 Video chat boshlash uchun quyidagi tugmalardan birini bosing:\n\n` +
-      `👤 1-ga-1 Chat — Tasodifiy suhbatdosh bilan muloqot\n` +
-      `👥 Guruh Chat — 4 kishilik guruh xonasi`;
+      `👤 1-ga-1 Chat — Tasodifiy suhbatdosh bilan\n` +
+      `➕ Yangi Guruh Ochish — O'zingiz admin bo'lgan xona\n` +
+      `🔑 Guruhga Qo'shilish — Kod orqali kirish`;
 
     await ctx.reply(msgText, {
       parse_mode: 'Markdown',
