@@ -317,9 +317,10 @@ function initBot() {
       return;
     }
 
-    const webAppUrlSolo = `${config.WEBAPP_URL}?tgId=${tgId}&mode=solo&v=500`;
-    const webAppUrlGroup = `${config.WEBAPP_URL}?tgId=${tgId}&mode=group&v=500`;
-    const webAppUrlMain = `${config.WEBAPP_URL}?tgId=${tgId}&v=500`;
+    const ts = Date.now();
+    const webAppUrlSolo = `${config.WEBAPP_URL}?tgId=${tgId}&mode=solo&t=${ts}`;
+    const webAppUrlGroup = `${config.WEBAPP_URL}?tgId=${tgId}&mode=group&t=${ts}`;
+    const webAppUrlMain = `${config.WEBAPP_URL}?tgId=${tgId}&t=${ts}`;
     const isHttps = webAppUrlMain.startsWith('https://');
 
     // Dynamically update Telegram Bot Menu Button for instant persistent WebApp access

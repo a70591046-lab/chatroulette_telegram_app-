@@ -43,39 +43,39 @@
 
       <div class="space-y-3 mb-4">
         <!-- 1-ga-1 Chat -->
-        <button onclick="selectAppMode('solo')" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600/40 to-purple-800/50 hover:from-purple-600 hover:to-purple-700 border border-purple-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 group">
-          <div class="flex items-center gap-3">
-            <span class="text-2xl group-hover:scale-110 transition-transform">👤</span>
-            <div class="text-left">
-              <div class="font-extrabold text-purple-200">1-ga-1 Solo Chat</div>
-              <div class="text-[10px] text-purple-300/80 font-normal">Yakkama-yakka tasodifiy muloqot</div>
+        <button type="button" id="modalBtnSolo" onclick="selectAppMode('solo')" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600/40 to-purple-800/50 hover:from-purple-600 hover:to-purple-700 border border-purple-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 cursor-pointer">
+          <div class="flex items-center gap-3 pointer-events-none">
+            <span class="text-2xl pointer-events-none">👤</span>
+            <div class="text-left pointer-events-none">
+              <div class="font-extrabold text-purple-200 pointer-events-none">1-ga-1 Solo Chat</div>
+              <div class="text-[10px] text-purple-300/80 font-normal pointer-events-none">Yakkama-yakka tasodifiy muloqot</div>
             </div>
           </div>
-          <i class="fas fa-chevron-right text-purple-400"></i>
+          <i class="fas fa-chevron-right text-purple-400 pointer-events-none"></i>
         </button>
 
         <!-- Guruh Ochish (Admin bo'lish) -->
-        <button onclick="createNewGroupRoom()" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600/40 to-cyan-800/50 hover:from-cyan-600 hover:to-cyan-700 border border-cyan-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 group">
-          <div class="flex items-center gap-3">
-            <span class="text-2xl group-hover:scale-110 transition-transform">➕</span>
-            <div class="text-left">
-              <div class="font-extrabold text-cyan-200">Yangi Guruh Ochish</div>
-              <div class="text-[10px] text-cyan-300/80 font-normal">Siz ⭐ Admin bo'lasiz va kod beriladi</div>
+        <button type="button" id="modalBtnCreateGroup" onclick="createNewGroupRoom()" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600/40 to-cyan-800/50 hover:from-cyan-600 hover:to-cyan-700 border border-cyan-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 cursor-pointer">
+          <div class="flex items-center gap-3 pointer-events-none">
+            <span class="text-2xl pointer-events-none">➕</span>
+            <div class="text-left pointer-events-none">
+              <div class="font-extrabold text-cyan-200 pointer-events-none">Yangi Guruh Ochish</div>
+              <div class="text-[10px] text-cyan-300/80 font-normal pointer-events-none">Siz ⭐ Admin bo'lasiz va kod beriladi</div>
             </div>
           </div>
-          <i class="fas fa-crown text-amber-400"></i>
+          <i class="fas fa-crown text-amber-400 pointer-events-none"></i>
         </button>
 
         <!-- Guruhga Qo'shilish (Kod orqali) -->
-        <button onclick="openJoinGroupModal()" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600/40 to-emerald-800/50 hover:from-emerald-600 hover:to-emerald-700 border border-emerald-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 group">
-          <div class="flex items-center gap-3">
-            <span class="text-2xl group-hover:scale-110 transition-transform">🔑</span>
-            <div class="text-left">
-              <div class="font-extrabold text-emerald-200">Guruhga Qo'shilish</div>
-              <div class="text-[10px] text-emerald-300/80 font-normal">Kod kiriting yoki ochiq xonalarga kiring</div>
+        <button type="button" id="modalBtnJoinGroup" onclick="openJoinGroupModal()" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600/40 to-emerald-800/50 hover:from-emerald-600 hover:to-emerald-700 border border-emerald-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 cursor-pointer">
+          <div class="flex items-center gap-3 pointer-events-none">
+            <span class="text-2xl pointer-events-none">🔑</span>
+            <div class="text-left pointer-events-none">
+              <div class="font-extrabold text-emerald-200 pointer-events-none">Guruhga Qo'shilish</div>
+              <div class="text-[10px] text-emerald-300/80 font-normal pointer-events-none">Kod kiriting yoki ochiq xonalarga kiring</div>
             </div>
           </div>
-          <i class="fas fa-sign-in-alt text-emerald-400"></i>
+          <i class="fas fa-sign-in-alt text-emerald-400 pointer-events-none"></i>
         </button>
       </div>
     </div>
