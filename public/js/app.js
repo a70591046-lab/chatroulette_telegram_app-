@@ -9,7 +9,7 @@ const BACKEND_API_URL = 'https://web-production-65a7f.up.railway.app';
 
 const ADMIN_TELEGRAM_IDS = ['7713174177', '123456789'];
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   // Show welcome mode modal immediately
   if (typeof showWelcomeModal === 'function') showWelcomeModal();
 
@@ -33,15 +33,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (!tgUser) {
-    const paramId = String(Math.floor(Math.random() * 9000000) + 1000000);
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramId = urlParams.get('tgId') || String(Math.floor(Math.random() * 9000000) + 1000000);
     tgUser = {
-      tgId: paramId,
+      tgId: String(paramId),
       firstName: 'Foydalanuvchi',
-      username: 'test_user'
+      username: 'user_' + paramId
     };
   }
-
-  const isAdmin = ADMIN_TELEGRAM_IDS.includes(String(tgUser.tgId));
 
   webrtc = new WebRTCManager({
     iceServers: [
@@ -69,8 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  await loadUserProfile();
-
+  // Connect Socket IMMEDIATELY (Do NOT await network calls!)
   const sock = initSocketConnection(tgUser.tgId, webrtc);
   sock.on('connect', () => {
     socketReady = true;
@@ -82,6 +80,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   setupEventListeners();
   switchTab('chat');
+
+  // Load user profile asynchronously in background
+  loadUserProfile().catch(() => {});
 
   // Pre-init camera/mic silently
   webrtc.initLocalStream().then((stream) => {
@@ -152,13 +153,11 @@ async function startMatchmakingSearch() {
 
   console.log('[App] Emitting search with tgId:', tgUser.tgId, 'mode:', activeChatMode);
 
-  webrtc.initLocalStream().then(stream => {
-    socket.emit('start-search', {
-      tgId: tgUser.tgId,
-      gender: currentProfile.gender || 'male',
-      targetGender: currentProfile.targetGender || 'any',
-      profile: currentProfile
-    });
+  socket.emit('start-search', {
+    tgId: tgUser.tgId,
+    gender: currentProfile.gender || 'male',
+    targetGender: currentProfile.targetGender || 'any',
+    profile: currentProfile
   });
 }
 
@@ -195,10 +194,12 @@ async function startGroupVideoSearch() {
   showSearchingState();
 
   webrtc.initLocalStream().then(stream => {
-    socket.emit('join-group-room', {
-      tgId: tgUser.tgId,
-      profile: currentProfile
-    });
+    if (stream) document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
+  }).catch(() => {});
+
+  socket.emit('join-group-room', {
+    tgId: tgUser.tgId,
+    profile: currentProfile
   });
 }
 window.startGroupVideoSearch = startGroupVideoSearch;
