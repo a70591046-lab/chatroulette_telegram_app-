@@ -163,15 +163,16 @@ class MatchmakingService {
       if (members.size < 4) {
         const creatorSocketId = this.roomCreators.get(roomId);
         const creatorSocket = io ? io.sockets.sockets.get(creatorSocketId) : null;
-        const creatorTgId = creatorSocket ? creatorSocket.handshake.query.tgId : null;
-        const creatorUser = creatorTgId ? db.getUser(creatorTgId) : null;
+        const creatorName = (creatorSocket && creatorSocket.handshake.query.firstName)
+          ? creatorSocket.handshake.query.firstName
+          : 'Admin';
 
         list.push({
           roomId,
           roomCode: roomId,
           memberCount: members.size,
           maxMembers: 4,
-          creatorName: creatorUser ? creatorUser.firstName : 'Admin'
+          creatorName
         });
       }
     }

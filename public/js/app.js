@@ -668,6 +668,8 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     showWelcomeModal();
   }, 100);
+});
+
 let currentGroupRoomCode = null;
 
 async function ensureSocketConnected() {
