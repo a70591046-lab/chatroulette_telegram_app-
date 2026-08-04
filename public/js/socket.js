@@ -160,6 +160,9 @@ function initSocketConnection(tgId, webrtcManager) {
 
   socket.on('group-peer-left', (data) => {
     showToast('A\'zo guruhni tark etdi');
+    if (webrtcManager && typeof webrtcManager.closeGroupPeerConnection === 'function') {
+      webrtcManager.closeGroupPeerConnection(data.peerSocketId);
+    }
     removeGroupVideoTile(data.peerSocketId);
   });
 

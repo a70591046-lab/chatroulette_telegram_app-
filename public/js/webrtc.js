@@ -352,5 +352,15 @@ class WebRTCManager {
     }
     this.groupConnections.forEach((pc) => pc.close());
     this.groupConnections.clear();
+    this.groupRemoteStreams.clear();
+  }
+
+  closeGroupPeerConnection(targetSocketId) {
+    const pc = this.groupConnections.get(targetSocketId);
+    if (pc) {
+      pc.close();
+      this.groupConnections.delete(targetSocketId);
+    }
+    this.groupRemoteStreams.delete(targetSocketId);
   }
 }

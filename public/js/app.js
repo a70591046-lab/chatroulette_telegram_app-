@@ -1003,6 +1003,11 @@ function resetVideoCallView() {
   document.getElementById('searchingRadarView')?.classList.add('hidden');
   document.getElementById('activeCallView')?.classList.add('hidden');
 
+  const remoteVideo = document.getElementById('remoteVideo');
+  if (remoteVideo) {
+    remoteVideo.srcObject = null;
+  }
+
   const groupView = document.getElementById('activeGroupView');
   if (groupView) {
     groupView.style.display = 'none';

@@ -503,7 +503,14 @@ function setupWebRTCSignaling(io) {
       }
 
       handleCallEnd(socket.id);
-      matchmaking.leaveGroupRoom(socket.id);
+      
+      const groupRes = matchmaking.leaveGroupRoom(socket.id);
+      if (groupRes) {
+        groupRes.remainingMembers.forEach(memId => {
+          io.to(memId).emit('group-peer-left', { peerSocketId: socket.id });
+        });
+      }
+
       const peerSocketId = matchmaking.endCall(socket.id);
       if (peerSocketId) {
         io.to(peerSocketId).emit('peer-left', { reason: 'disconnected' });
