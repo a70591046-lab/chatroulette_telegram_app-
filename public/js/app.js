@@ -91,24 +91,44 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const paramMode = urlParams.get('mode');
 
-  if (paramMode === 'create_group') {
-    setTimeout(() => {
-      const modal = document.getElementById('welcomeModeModal');
-      if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); }
-      createNewGroupRoom();
-    }, 200);
-  } else if (paramMode === 'join_group') {
-    setTimeout(() => {
-      openJoinGroupModal();
-    }, 200);
-  } else if (paramMode === 'solo') {
-    setTimeout(() => {
-      selectAppMode('solo');
-    }, 200);
-  } else {
-    // ALWAYS show welcome modal if no mode or standard mode
-    setTimeout(() => showWelcomeModal(), 200);
-  }
+  setTimeout(() => {
+    const modal = document.getElementById('welcomeModeModal');
+    if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); }
+    
+    // Unhide initial match view
+    const initialView = document.getElementById('initialMatchView');
+    if (initialView) initialView.classList.remove('hidden');
+
+    const btnSolo = document.getElementById('initBtnSolo');
+    const btnCreate = document.getElementById('initBtnCreateGroup');
+    const btnJoin = document.getElementById('initBtnJoinGroup');
+    const titleText = document.getElementById('matchTitleText');
+    const descText = document.getElementById('matchDescText');
+
+    if (paramMode === 'create_group') {
+      if (btnSolo) btnSolo.style.display = 'none';
+      if (btnJoin) btnJoin.style.display = 'none';
+      if (titleText) titleText.innerText = "Yangi Guruh";
+      if (descText) descText.innerText = "Yangi guruh xonasini ochish uchun pastdagi tugmani bosing";
+    } else if (paramMode === 'join_group') {
+      if (btnSolo) btnSolo.style.display = 'none';
+      if (btnCreate) btnCreate.style.display = 'none';
+      if (titleText) titleText.innerText = "Guruhga Qo'shilish";
+      if (descText) descText.innerText = "Mavjud guruhga kirish uchun pastdagi tugmani bosing";
+    } else if (paramMode === 'solo') {
+      if (btnCreate) btnCreate.style.display = 'none';
+      if (btnJoin) btnJoin.style.display = 'none';
+      if (titleText) titleText.innerText = "1-ga-1 Chat";
+      if (descText) descText.innerText = "Tasodifiy suhbatdosh topish uchun pastdagi tugmani bosing";
+    } else {
+      // Show welcome modal if no valid mode
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+      }
+      if (initialView) initialView.classList.add('hidden');
+    }
+  }, 200);
 });
 
 async function requestCameraMicPermission() {

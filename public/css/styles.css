@@ -411,6 +411,41 @@ html, body {
   100% { transform: translate(-50%, -80%) scale(0.5); opacity: 0; }
 }
 
+.gift-label {
+  position: fixed;
+  top: calc(50% + 70px);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.5rem;
+  text-shadow: 0 4px 15px rgba(0,0,0,0.8), 0 0 10px currentColor;
+  opacity: 0;
+  z-index: 9999;
+  pointer-events: none;
+  animation: giftLabelPop 2.5s ease forwards;
+  animation-delay: 0.2s;
+}
+@keyframes giftLabelPop {
+  0%   { opacity: 0; transform: translate(-50%, 0px) scale(0.5); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -80px) scale(0.8); }
+}
+
+.gift-particle {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0;
+  animation: particleBurst 1.2s ease-out forwards;
+}
+@keyframes particleBurst {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+}
+
 /* Floating Banner */
 .gift-banner {
   position: fixed;
