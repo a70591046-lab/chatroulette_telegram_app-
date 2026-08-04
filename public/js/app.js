@@ -667,18 +667,6 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     showWelcomeModal();
   }, 100);
-});
-
-function showGroupRoomState(data) {
-  document.getElementById('initialMatchView')?.classList.add('hidden');
-  document.getElementById('searchingRadarView')?.classList.add('hidden');
-  document.getElementById('activeCallView')?.classList.add('hidden');
-
-  if (data) {
-    isCurrentGroupCreator = !!data.isCreator;
-    currentGroupCreatorSocketId = data.creatorSocketId || null;
-  }
-
 let currentGroupRoomCode = null;
 
 async function ensureSocketConnected() {
