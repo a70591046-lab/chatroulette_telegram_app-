@@ -330,7 +330,7 @@ function initBot() {
           chat_id: tgId,
           menu_button: {
             type: 'web_app',
-            text: '⚡ Muloqot Turini Tanlash',
+            text: '⚡ Mini App',
             web_app: { url: webAppUrlMain }
           }
         });
@@ -343,34 +343,39 @@ function initBot() {
 
     if (isHttps) {
       inlineButtons.push([
-        Markup.button.webApp('👤 1-ga-1 Chat Ochish', webAppUrlSolo),
-        Markup.button.webApp('👥 Guruh Ochish', webAppUrlGroup)
+        Markup.button.webApp('👤 1-ga-1 Chat', webAppUrlSolo),
+        Markup.button.webApp('👥 Guruh Chat', webAppUrlGroup)
       ]);
       inlineButtons.push([
-        Markup.button.webApp('🚀 Asosiy Mini App', webAppUrlMain)
+        Markup.button.webApp('🚀 Mini App ni ochish', webAppUrlMain)
       ]);
       inlineButtons.push([
         Markup.button.url('🌐 Brauzerda ochish', webAppUrlMain)
       ]);
     } else {
       inlineButtons.push([
-        Markup.button.url('👤 1-ga-1 Chat Ochish', webAppUrlSolo),
-        Markup.button.url('👥 Guruh Ochish', webAppUrlGroup)
+        Markup.button.url('👤 1-ga-1 Chat', webAppUrlSolo),
+        Markup.button.url('👥 Guruh Chat', webAppUrlGroup)
       ]);
       inlineButtons.push([
-        Markup.button.url(getText(lang, 'open_miniapp_btn'), webAppUrlMain)
+        Markup.button.url('🚀 Mini App ni ochish', webAppUrlMain)
       ]);
     }
 
     inlineButtons.push([
-      Markup.button.callback('🇺🇿 O\'zbekcha', 'set_lang_uz'),
+      Markup.button.callback("🇺🇿 O'zbekcha", 'set_lang_uz'),
       Markup.button.callback('🇷🇺 Русский', 'set_lang_ru')
     ]);
 
-    await ctx.replyWithMarkdown(
-      `💬 *Muloqot Turini Tanlang:*\n\n1️⃣ **👤 1-ga-1 Chat Ochish** — Tasodifiy suhbatdosh bilan 1-ga-1 muloqot.\n2️⃣ **👥 Guruh Ochish** — 4 kishilik Guruh Video Lounge xonasi yaratish va muloqot qilish.`,
-      Markup.inlineKeyboard(inlineButtons)
-    );
+    const msgText = `🎉 Xush kelibsiz!\n\n` +
+      `📹 Video chat boshlash uchun quyidagi tugmalardan birini bosing:\n\n` +
+      `👤 1-ga-1 Chat — Tasodifiy suhbatdosh bilan muloqot\n` +
+      `👥 Guruh Chat — 4 kishilik guruh xonasi`;
+
+    await ctx.reply(msgText, {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard(inlineButtons)
+    });
   }
 
   // Helper: Send sponsor guard prompt with channel links

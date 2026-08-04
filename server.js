@@ -274,7 +274,11 @@ server.listen(config.PORT, async () => {
   // Launch Bot after URL is determined
   try {
     botInstance = initBot();
-    botInstance.launch().then(() => {
+    // Clear any leftover webhook and pending updates before polling
+    botInstance.telegram.deleteWebhook({ drop_pending_updates: true })
+      .catch(e => console.warn('deleteWebhook:', e.message));
+
+    botInstance.launch({ dropPendingUpdates: true }).then(() => {
       console.log('🤖 Telegram Bot launched successfully!');
     }).catch((err) => {
       console.error('⚠️ Telegram Bot launch error:', err.message);
