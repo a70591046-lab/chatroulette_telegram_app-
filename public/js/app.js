@@ -681,8 +681,25 @@ function showGroupRoomState(data) {
 
 let currentGroupRoomCode = null;
 
+async function ensureSocketConnected() {
+  if (!socket || !socket.connected) {
+    showToast('⏳ Serverga ulanmoqda...');
+    if (socket && typeof socket.connect === 'function') {
+      socket.connect();
+    } else if (typeof initSocketConnection === 'function' && tgUser) {
+      initSocketConnection(tgUser.tgId, webrtc);
+    }
+    let waited = 0;
+    while ((!socket || !socket.connected) && waited < 25) {
+      await new Promise(r => setTimeout(r, 100));
+      waited++;
+    }
+  }
+  return socket && socket.connected;
+}
+
 // ── Group Room Actions ─────────────────────────────
-window.createNewGroupRoom = function() {
+window.createNewGroupRoom = async function() {
   const modal = document.getElementById('welcomeModeModal');
   if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); }
   setChatMode('group');
@@ -690,12 +707,21 @@ window.createNewGroupRoom = function() {
 
   showSearchingState();
 
+  const connected = await ensureSocketConnected();
+  if (!connected) {
+    showToast('❌ Server bilan aloqa yo\'q, iltimos qayta urinib ko\'ring');
+    hideSearchingState();
+    showWelcomeModal();
+    return;
+  }
+
   webrtc.initLocalStream().then(stream => {
     if (stream) document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
-    socket.emit('create-group-room', {
-      tgId: tgUser.tgId,
-      profile: currentProfile || { firstName: tgUser.firstName }
-    });
+  }).catch(() => {});
+
+  socket.emit('create-group-room', {
+    tgId: tgUser.tgId,
+    profile: currentProfile || { firstName: tgUser.firstName }
   });
 };
 
@@ -711,7 +737,7 @@ window.closeJoinGroupModal = function() {
   showWelcomeModal();
 };
 
-window.submitJoinGroupCode = function() {
+window.submitJoinGroupCode = async function() {
   const input = document.getElementById('groupCodeInput');
   const code = input?.value?.trim();
   if (!code) {
@@ -723,32 +749,51 @@ window.submitJoinGroupCode = function() {
   setChatMode('group');
   showSearchingState();
 
+  const connected = await ensureSocketConnected();
+  if (!connected) {
+    showToast('❌ Server bilan aloqa yo\'q, iltimos qayta urinib ko\'ring');
+    hideSearchingState();
+    showWelcomeModal();
+    return;
+  }
+
   webrtc.initLocalStream().then(stream => {
     if (stream) document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
-    socket.emit('join-group-by-code', {
-      tgId: tgUser.tgId,
-      profile: currentProfile || { firstName: tgUser.firstName },
-      roomCode: code
-    });
+  }).catch(() => {});
+
+  socket.emit('join-group-by-code', {
+    tgId: tgUser.tgId,
+    profile: currentProfile || { firstName: tgUser.firstName },
+    roomCode: code
   });
 };
 
-window.joinPublicRoomDirect = function(code) {
+window.joinPublicRoomDirect = async function(code) {
   document.getElementById('groupJoinModal')?.classList.add('hidden');
   setChatMode('group');
   showSearchingState();
 
+  const connected = await ensureSocketConnected();
+  if (!connected) {
+    showToast('❌ Server bilan aloqa yo\'q, iltimos qayta urinib ko\'ring');
+    hideSearchingState();
+    showWelcomeModal();
+    return;
+  }
+
   webrtc.initLocalStream().then(stream => {
     if (stream) document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
-    socket.emit('join-group-by-code', {
-      tgId: tgUser.tgId,
-      profile: currentProfile || { firstName: tgUser.firstName },
-      roomCode: code
-    });
+  }).catch(() => {});
+
+  socket.emit('join-group-by-code', {
+    tgId: tgUser.tgId,
+    profile: currentProfile || { firstName: tgUser.firstName },
+    roomCode: code
   });
 };
 
-window.fetchPublicGroupRooms = function() {
+window.fetchPublicGroupRooms = async function() {
+  await ensureSocketConnected();
   if (socket && socket.connected) {
     socket.emit('get-public-rooms');
   }

@@ -66,7 +66,7 @@ function setupWebRTCSignaling(io) {
 
     // Helper to process group join result
     const processGroupJoinResult = (res, tgId, profile) => {
-      if (!res.success) {
+      if (res && res.success === false) {
         socket.emit('group-join-error', { message: res.error || 'Guruhga ulanib bo\'lmadi!' });
         return;
       }
