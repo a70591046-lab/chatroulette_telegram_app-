@@ -367,7 +367,10 @@ function initBot() {
       Markup.button.callback('🇷🇺 Русский', 'set_lang_ru')
     ]);
 
-    const msgText = `🎉 Xush kelibsiz!\n\n` +
+    const { getText } = require('./i18n');
+    const welcomeText = getText(lang, 'welcome');
+    
+    const msgText = `${welcomeText}\n\n` +
       `📹 Video chat boshlash uchun quyidagi tugmalardan birini bosing:\n\n` +
       `👤 1-ga-1 Chat — Tasodifiy suhbatdosh bilan muloqot\n` +
       `👥 Guruh Chat — 4 kishilik guruh xonasi`;

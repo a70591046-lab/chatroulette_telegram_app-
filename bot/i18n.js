@@ -2,9 +2,7 @@ const translations = {
   uz: {
     welcome: `👋 *Xush kelibsiz! Chatroulette Mini App Botiga!*
 
-🎥 Bu yerda siz tasodifiy suhbatdoshlar bilan video muloqot qilishingiz, yangi do'stlar orttirishingiz va qiziqarli vaqt o'tkazishingiz mumkin.
-
-👇 *Mini App-dan foydalanish uchun tilni tanlang va telefon raqamingizni tasdiqlang:*`,
+🎥 Bu yerda siz tasodifiy suhbatdoshlar bilan video muloqot qilishingiz, yangi do'stlar orttirishingiz va qiziqarli vaqt o'tkazishingiz mumkin.`,
     choose_lang: "🇺🇿 Tilni tanlang / 🇷🇺 Выберите язык:",
     lang_set: "✅ *Til O'zbek tiliga o'zgartirildi!*",
     share_contact_btn: "📱 Telefon raqamni yuborish",
@@ -20,9 +18,7 @@ const translations = {
   ru: {
     welcome: `👋 *Добро пожаловать в бота Chatroulette Mini App!*
 
-🎥 Здесь вы можете общаться в случайных видеочатах, находить новых друзей и весело проводить время.
-
-👇 *Выберите язык и подтвердите свой номер телефона для доступа к Mini App:*`,
+🎥 Здесь вы можете общаться в случайных видеочатах, находить новых друзей и весело проводить время.`,
     choose_lang: "🇺🇿 Tilni tanlang / 🇷🇺 Выберите язык:",
     lang_set: "✅ *Язык успешно изменен на Русский!*",
     share_contact_btn: "📱 Поделиться номером",
