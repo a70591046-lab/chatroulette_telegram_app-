@@ -92,21 +92,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const paramMode = urlParams.get('mode');
 
   setTimeout(() => {
-    // Ensure initial match view is visible
+    // Ensure initial match view is visible by removing the 'hidden' class.
+    // DO NOT set style.display directly, as it will override subsequent classList.add('hidden') calls!
     const initialView = document.getElementById('initialMatchView');
     if (initialView) {
       initialView.classList.remove('hidden');
-      initialView.style.display = 'flex';
+      initialView.style.display = ''; // Clear any inline display style just in case
     }
-
-    // Handle Telegram specific buttons
-    if (paramMode === 'create_group') {
-      createNewGroupRoom();
-    } else if (paramMode === 'join_group') {
-      openJoinGroupModal();
-    } else if (paramMode === 'solo') {
-      // Show all 3 buttons, user MUST click to avoid autoplay blocks on 1-on-1 video
-    }
+    
+    // We intentionally DO NOT auto-execute createNewGroupRoom() or selectAppMode('solo') here.
+    // Executing them automatically on page load without a user click causes Safari and other mobile browsers 
+    // to block camera access (NotAllowedError) due to strict Autoplay policies.
+    // The user MUST click the relevant button in initialMatchView to proceed.
   }, 200);
 });
 
