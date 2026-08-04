@@ -317,8 +317,9 @@ function initBot() {
       return;
     }
 
-    const webAppUrl = `${config.WEBAPP_URL}?tgId=${tgId}&v=6`;
-    const isHttps = webAppUrl.startsWith('https://');
+    const webAppUrlSolo = `${config.WEBAPP_URL}?tgId=${tgId}&mode=solo&v=100`;
+    const webAppUrlGroup = `${config.WEBAPP_URL}?tgId=${tgId}&mode=group&v=100`;
+    const webAppUrlMain = `${config.WEBAPP_URL}?tgId=${tgId}&v=100`;
 
     // Dynamically update Telegram Bot Menu Button for instant persistent WebApp access
     if (isHttps) {
@@ -327,8 +328,8 @@ function initBot() {
           chat_id: tgId,
           menu_button: {
             type: 'web_app',
-            text: '🚀 Mini App',
-            web_app: { url: webAppUrl }
+            text: '⚡ Muloqot Turini Tanlash',
+            web_app: { url: webAppUrlMain }
           }
         });
       } catch (err) {
@@ -336,28 +337,36 @@ function initBot() {
       }
     }
 
-    const inlineButtons = [
-      [
-        Markup.button.callback('🇺🇿 O\'zbekcha', 'set_lang_uz'),
-        Markup.button.callback('🇷🇺 Русский', 'set_lang_ru')
-      ]
-    ];
+    const inlineButtons = [];
 
     if (isHttps) {
       inlineButtons.push([
-        Markup.button.webApp(getText(lang, 'open_miniapp_btn'), webAppUrl)
+        Markup.button.webApp('👤 1-ga-1 Chat Ochish', webAppUrlSolo),
+        Markup.button.webApp('👥 Guruh Ochish', webAppUrlGroup)
       ]);
       inlineButtons.push([
-        Markup.button.url('🌐 Brauzerda to\'liq ochish', webAppUrl)
+        Markup.button.webApp('🚀 Asosiy Mini App', webAppUrlMain)
+      ]);
+      inlineButtons.push([
+        Markup.button.url('🌐 Brauzerda ochish', webAppUrlMain)
       ]);
     } else {
       inlineButtons.push([
-        Markup.button.url(getText(lang, 'open_miniapp_btn'), webAppUrl)
+        Markup.button.url('👤 1-ga-1 Chat Ochish', webAppUrlSolo),
+        Markup.button.url('👥 Guruh Ochish', webAppUrlGroup)
+      ]);
+      inlineButtons.push([
+        Markup.button.url(getText(lang, 'open_miniapp_btn'), webAppUrlMain)
       ]);
     }
 
+    inlineButtons.push([
+      Markup.button.callback('🇺🇿 O\'zbekcha', 'set_lang_uz'),
+      Markup.button.callback('🇷🇺 Русский', 'set_lang_ru')
+    ]);
+
     await ctx.replyWithMarkdown(
-      `🚀 *${getText(lang, 'open_miniapp_btn')}*\n\nSuhbatni boshlash va Mini App-ni to'liq ekranda ochish uchun pastdagi tugmani bosing:`,
+      `💬 *Muloqot Turini Tanlang:*\n\n1️⃣ **👤 1-ga-1 Chat Ochish** — Tasodifiy suhbatdosh bilan 1-ga-1 muloqot.\n2️⃣ **👥 Guruh Ochish** — 4 kishilik Guruh Video Lounge xonasi yaratish va muloqot qilish.`,
       Markup.inlineKeyboard(inlineButtons)
     );
   }

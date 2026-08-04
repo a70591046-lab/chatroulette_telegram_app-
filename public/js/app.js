@@ -655,27 +655,17 @@ function selectAppMode(mode) {
 }
 window.selectAppMode = selectAppMode;
 
-// Show welcome modal on load
+// Show welcome modal on load or auto-select if specified in URL
 window.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialMode = urlParams.get('mode');
+  if (initialMode === 'solo' || initialMode === 'group') {
+    selectAppMode(initialMode);
+    return;
+  }
+
   setTimeout(() => {
     showWelcomeModal();
-
-    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.showPopup === 'function') {
-      try {
-        window.Telegram.WebApp.showPopup({
-          title: "Muloqot Turini Tanlang",
-          message: "Chat ochasizmi yoki Guruh Video Room ochasizmi?",
-          buttons: [
-            { id: "solo", type: "default", text: "👤 1-ga-1 Chat" },
-            { id: "group", type: "ok", text: "👥 Guruh Video Room" }
-          ]
-        }, (buttonId) => {
-          if (buttonId === 'solo' || buttonId === 'group') {
-            selectAppMode(buttonId);
-          }
-        });
-      } catch (e) {}
-    }
   }, 100);
 });
 
@@ -799,6 +789,15 @@ function addGroupVideoTile(socketId, profile, isTileCreator) {
     </div>
   `;
   grid.appendChild(tile);
+  const remoteStream = (webrtc && typeof webrtc.getGroupRemoteStream === 'function') ? webrtc.getGroupRemoteStream(socketId) : null;
+  if (remoteStream) {
+    const v = tile.querySelector('video');
+    if (v) {
+      v.srcObject = remoteStream;
+      v.muted = false;
+      v.play().catch(() => {});
+    }
+  }
   updateGroupGridLayout();
 }
 

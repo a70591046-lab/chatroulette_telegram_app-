@@ -8,6 +8,7 @@ class WebRTCManager {
     this.remoteStream = null;
     this.peerConnection = null;
     this.groupConnections = new Map();
+    this.groupRemoteStreams = new Map();
     this.facingMode = 'user';
     this.isCameraOn = true;
     this.isMicOn = true;
@@ -17,6 +18,10 @@ class WebRTCManager {
     this.onRemoteStreamReady = null;
     this.onIceCandidate = null;
     this.onGroupRemoteTrack = null;
+  }
+
+  getGroupRemoteStream(targetSocketId) {
+    return this.groupRemoteStreams.get(targetSocketId) || null;
   }
 
   async initLocalStream() {
@@ -90,21 +95,22 @@ class WebRTCManager {
     }
 
     this.peerConnection.ontrack = (event) => {
-      const stream = (event.streams && event.streams[0]) ? event.streams[0] : null;
-      if (stream) {
-        stream.getTracks().forEach(track => {
+      const incomingStream = (event.streams && event.streams[0]) ? event.streams[0] : null;
+      if (incomingStream) {
+        incomingStream.getTracks().forEach(track => {
           if (!this.remoteStream.getTracks().find(t => t.id === track.id)) {
             this.remoteStream.addTrack(track);
           }
         });
-      } else {
-        this.remoteStream.addTrack(event.track);
+      } else if (event.track) {
+        if (!this.remoteStream.getTracks().find(t => t.id === event.track.id)) {
+          this.remoteStream.addTrack(event.track);
+        }
       }
 
-      // Always rebind the video element to ensure it renders
       const remoteVid = document.getElementById('remoteVideo');
       if (remoteVid) {
-        remoteVid.srcObject = this.remoteStream;
+        remoteVid.srcObject = incomingStream || this.remoteStream;
         remoteVid.muted = false;
         remoteVid.play().catch(e => console.warn('[WebRTC] remoteVideo play error:', e));
       }
@@ -163,7 +169,11 @@ class WebRTCManager {
     }
 
     const pc = new RTCPeerConnection({ iceServers: this.iceServers });
-    const remoteMediaStream = new MediaStream();
+    let remoteMediaStream = this.groupRemoteStreams.get(targetSocketId);
+    if (!remoteMediaStream) {
+      remoteMediaStream = new MediaStream();
+      this.groupRemoteStreams.set(targetSocketId, remoteMediaStream);
+    }
 
     // Add local tracks — must happen before offer/answer
     if (this.localStream) {
@@ -173,9 +183,9 @@ class WebRTCManager {
     }
 
     pc.ontrack = (event) => {
-      const incoming = (event.streams && event.streams[0]) ? event.streams[0] : null;
-      if (incoming) {
-        incoming.getTracks().forEach(t => {
+      const incomingStream = (event.streams && event.streams[0]) ? event.streams[0] : null;
+      if (incomingStream) {
+        incomingStream.getTracks().forEach(t => {
           if (!remoteMediaStream.getTracks().find(x => x.id === t.id)) {
             remoteMediaStream.addTrack(t);
           }
@@ -189,8 +199,8 @@ class WebRTCManager {
       // Bind directly to the video element
       const vidEl = document.getElementById(`group_vid_${targetSocketId}`);
       if (vidEl) {
-        vidEl.srcObject = remoteMediaStream;
-        vidEl.muted = false; // Remote audio should play — NOT muted
+        vidEl.srcObject = (incomingStream && incomingStream.getVideoTracks().length > 0) ? incomingStream : remoteMediaStream;
+        vidEl.muted = false;
         vidEl.play().catch(e => console.warn('[Group] Remote video play:', e));
       }
 
