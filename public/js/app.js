@@ -863,7 +863,10 @@ function showGroupRoomState(data) {
     myTile.innerHTML = `
       <video autoplay playsinline muted></video>
       <div class="group-tile-name">
-        <span>Siz ${myBadge}</span>
+        <div class="flex items-center gap-1 overflow-hidden">
+          <span class="font-bold">Siz</span>
+          ${myBadge}
+        </div>
         <span id="mic_status_self"><i class="fas fa-microphone text-emerald-400"></i></span>
       </div>
     `;
