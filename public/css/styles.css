@@ -351,14 +351,35 @@ html, body {
   position: absolute;
   bottom: 8px;
   left: 8px;
+  right: 8px;
   background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(10px);
-  padding: 4px 10px;
+  padding: 4px 8px;
   border-radius: 10px;
   font-size: 11px;
   font-weight: 700;
   color: #e2e8f0;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  items-center: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.group-volume-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.group-volume-slider {
+  width: 45px;
+  height: 3px;
+  accent-color: #38bdf8;
+  cursor: pointer;
 }
 
 /* Gift Animation */

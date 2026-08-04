@@ -64,18 +64,12 @@ function setupWebRTCSignaling(io) {
       }
     });
 
-    // Join Group Video Chat Lounge
-    const handleGroupJoin = (data) => {
-      const { tgId, profile } = data;
-      if (!tgId) return;
-
-      if (db.isBanned(tgId)) {
-        socket.emit('banned');
+    // Helper to process group join result
+    const processGroupJoinResult = (res, tgId, profile) => {
+      if (!res.success) {
+        socket.emit('group-join-error', { message: res.error || 'Guruhga ulanib bo\'lmadi!' });
         return;
       }
-
-      db.recordActivity(tgId);
-      const res = matchmaking.joinGroupRoom(socket.id, tgId, profile);
 
       socket.join(res.roomId);
 
@@ -94,6 +88,7 @@ function setupWebRTCSignaling(io) {
 
       socket.emit('group-joined', {
         roomId: res.roomId,
+        roomCode: res.roomCode || res.roomId,
         creatorSocketId: res.creatorSocketId,
         isCreator: res.isCreator,
         existingMembers: existingMemberProfiles,
@@ -108,8 +103,41 @@ function setupWebRTCSignaling(io) {
       });
     };
 
-    socket.on('start-group-search', handleGroupJoin);
-    socket.on('join-group-room', handleGroupJoin);
+    // Create a NEW group room (User is guaranteed Group Admin / Creator)
+    socket.on('create-group-room', (data) => {
+      const { tgId, profile } = data;
+      if (!tgId) return;
+      if (db.isBanned(tgId)) { socket.emit('banned'); return; }
+      db.recordActivity(tgId);
+      const res = matchmaking.createGroupRoom(socket.id, tgId, profile);
+      processGroupJoinResult(res, tgId, profile);
+    });
+
+    // Join a specific group room by code
+    socket.on('join-group-by-code', (data) => {
+      const { tgId, profile, roomCode } = data;
+      if (!tgId) return;
+      if (db.isBanned(tgId)) { socket.emit('banned'); return; }
+      db.recordActivity(tgId);
+      const res = matchmaking.joinGroupRoomByCode(socket.id, tgId, profile, roomCode);
+      processGroupJoinResult(res, tgId, profile);
+    });
+
+    // Request active public group rooms
+    socket.on('get-public-rooms', () => {
+      const rooms = matchmaking.getPublicGroupRooms(io);
+      socket.emit('public-rooms-list', { rooms });
+    });
+
+    // Fallback auto-join
+    socket.on('start-group-search', (data) => {
+      const { tgId, profile } = data;
+      if (!tgId) return;
+      if (db.isBanned(tgId)) { socket.emit('banned'); return; }
+      db.recordActivity(tgId);
+      const res = matchmaking.joinGroupRoom(socket.id, tgId, profile);
+      processGroupJoinResult(res, tgId, profile);
+    });
 
     // Real-time Mute/Unmute Mic Signal
     socket.on('send-mic-toggle', (data) => {

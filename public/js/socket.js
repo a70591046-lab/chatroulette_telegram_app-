@@ -92,6 +92,18 @@ function initSocketConnection(tgId, webrtcManager) {
     showToast(data.isOff ? '🚫 Suhbatdosh kamerani o\'chirdi' : '🎥 Suhbatdosh kamerani yoqdi');
   });
 
+  socket.on('group-join-error', (data) => {
+    hideSearchingState();
+    showToast(`❌ ${data.message || 'Guruhga ulanishda xatolik!'}`);
+    if (typeof showWelcomeModal === 'function') showWelcomeModal();
+  });
+
+  socket.on('public-rooms-list', (data) => {
+    if (typeof renderPublicGroupRooms === 'function') {
+      renderPublicGroupRooms(data.rooms || []);
+    }
+  });
+
   // ── Group Mode (Full Mesh WebRTC) ───────────────
   socket.on('group-joined', async (data) => {
     console.log('[Socket] Group joined, room:', data.roomId, 'members:', data.existingMembers);

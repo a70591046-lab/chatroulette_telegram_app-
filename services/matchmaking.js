@@ -76,6 +76,66 @@ class MatchmakingService {
     return null;
   }
 
+  // Generate 6-digit numerical room code (e.g. 749201)
+  generateRoomCode() {
+    let code;
+    do {
+      code = String(Math.floor(100000 + Math.random() * 900000));
+    } while (this.groupRooms.has(code));
+    return code;
+  }
+
+  // Create a brand new group room where socketId is GUARANTEED Creator / Admin
+  createGroupRoom(socketId, tgId, profile) {
+    this.removeFromQueue(socketId);
+    this.endCall(socketId);
+
+    const roomId = this.generateRoomCode();
+    this.groupRooms.set(roomId, new Set([socketId]));
+    this.socketGroupRoom.set(socketId, roomId);
+    this.roomCreators.set(roomId, socketId);
+
+    return {
+      success: true,
+      roomId,
+      roomCode: roomId,
+      creatorSocketId: socketId,
+      isCreator: true,
+      members: []
+    };
+  }
+
+  // Join a specific room by its 6-digit code
+  joinGroupRoomByCode(socketId, tgId, profile, targetCode) {
+    this.removeFromQueue(socketId);
+    this.endCall(socketId);
+
+    const cleanCode = String(targetCode || '').trim();
+    if (!this.groupRooms.has(cleanCode)) {
+      return { success: false, error: 'Xona kodi topilmadi! Iltimos qayta tekshiring.' };
+    }
+
+    const roomMembers = this.groupRooms.get(cleanCode);
+    if (roomMembers.size >= 4) {
+      return { success: false, error: 'Ushbu guruh xonasi to\'lgan! (Maksimum 4 a\'zo)' };
+    }
+
+    roomMembers.add(socketId);
+    this.socketGroupRoom.set(socketId, cleanCode);
+
+    const creatorSocketId = this.roomCreators.get(cleanCode);
+
+    return {
+      success: true,
+      roomId: cleanCode,
+      roomCode: cleanCode,
+      creatorSocketId,
+      isCreator: creatorSocketId === socketId,
+      members: Array.from(roomMembers).filter(id => id !== socketId)
+    };
+  }
+
+  // Auto-join any available public group room (fallback)
   joinGroupRoom(socketId, tgId, profile) {
     this.removeFromQueue(socketId);
     this.endCall(socketId);
@@ -90,23 +150,32 @@ class MatchmakingService {
     }
 
     if (!targetRoomId) {
-      targetRoomId = `group_${Date.now()}_${Math.floor(Math.random()*1000)}`;
-      this.groupRooms.set(targetRoomId, new Set());
-      this.roomCreators.set(targetRoomId, socketId); // First user is Creator / Group Admin!
+      return this.createGroupRoom(socketId, tgId, profile);
     }
 
-    const roomMembers = this.groupRooms.get(targetRoomId);
-    roomMembers.add(socketId);
-    this.socketGroupRoom.set(socketId, targetRoomId);
+    return this.joinGroupRoomByCode(socketId, tgId, profile, targetRoomId);
+  }
 
-    const creatorSocketId = this.roomCreators.get(targetRoomId);
+  // Get active public rooms list
+  getPublicGroupRooms(io) {
+    const list = [];
+    for (const [roomId, members] of this.groupRooms.entries()) {
+      if (members.size < 4) {
+        const creatorSocketId = this.roomCreators.get(roomId);
+        const creatorSocket = io ? io.sockets.sockets.get(creatorSocketId) : null;
+        const creatorTgId = creatorSocket ? creatorSocket.handshake.query.tgId : null;
+        const creatorUser = creatorTgId ? db.getUser(creatorTgId) : null;
 
-    return {
-      roomId: targetRoomId,
-      creatorSocketId,
-      isCreator: creatorSocketId === socketId,
-      members: Array.from(roomMembers).filter(id => id !== socketId)
-    };
+        list.push({
+          roomId,
+          roomCode: roomId,
+          memberCount: members.size,
+          maxMembers: 4,
+          creatorName: creatorUser ? creatorUser.firstName : 'Admin'
+        });
+      }
+    }
+    return list;
   }
 
   isRoomCreator(socketId) {

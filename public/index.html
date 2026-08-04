@@ -42,7 +42,8 @@
       <p class="text-xs text-slate-300 mb-6">Muloqot turini tanlang:</p>
 
       <div class="space-y-3 mb-4">
-        <button onclick="selectAppMode('solo')" class="w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-purple-600/40 to-purple-800/50 hover:from-purple-600 hover:to-purple-700 border border-purple-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 group">
+        <!-- 1-ga-1 Chat -->
+        <button onclick="selectAppMode('solo')" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600/40 to-purple-800/50 hover:from-purple-600 hover:to-purple-700 border border-purple-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 group">
           <div class="flex items-center gap-3">
             <span class="text-2xl group-hover:scale-110 transition-transform">👤</span>
             <div class="text-left">
@@ -53,15 +54,28 @@
           <i class="fas fa-chevron-right text-purple-400"></i>
         </button>
 
-        <button onclick="selectAppMode('group')" class="w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-cyan-600/40 to-cyan-800/50 hover:from-cyan-600 hover:to-cyan-700 border border-cyan-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 group">
+        <!-- Guruh Ochish (Admin bo'lish) -->
+        <button onclick="createNewGroupRoom()" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600/40 to-cyan-800/50 hover:from-cyan-600 hover:to-cyan-700 border border-cyan-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 group">
           <div class="flex items-center gap-3">
-            <span class="text-2xl group-hover:scale-110 transition-transform">👥</span>
+            <span class="text-2xl group-hover:scale-110 transition-transform">➕</span>
             <div class="text-left">
-              <div class="font-extrabold text-cyan-200">Guruh Ochish</div>
-              <div class="text-[10px] text-cyan-300/80 font-normal">4 kishilik guruhli muloqot xonasi yaratish</div>
+              <div class="font-extrabold text-cyan-200">Yangi Guruh Ochish</div>
+              <div class="text-[10px] text-cyan-300/80 font-normal">Siz ⭐ Admin bo'lasiz va kod beriladi</div>
             </div>
           </div>
-          <i class="fas fa-chevron-right text-cyan-400"></i>
+          <i class="fas fa-crown text-amber-400"></i>
+        </button>
+
+        <!-- Guruhga Qo'shilish (Kod orqali) -->
+        <button onclick="openJoinGroupModal()" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600/40 to-emerald-800/50 hover:from-emerald-600 hover:to-emerald-700 border border-emerald-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 group">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl group-hover:scale-110 transition-transform">🔑</span>
+            <div class="text-left">
+              <div class="font-extrabold text-emerald-200">Guruhga Qo'shilish</div>
+              <div class="text-[10px] text-emerald-300/80 font-normal">Kod kiriting yoki ochiq xonalarga kiring</div>
+            </div>
+          </div>
+          <i class="fas fa-sign-in-alt text-emerald-400"></i>
         </button>
       </div>
     </div>
@@ -255,7 +269,13 @@
           
           <!-- Top Group Bar -->
           <div class="glass-panel px-4 py-2 rounded-2xl mb-2 flex items-center justify-between z-20 flex-shrink-0">
-            <span class="text-xs font-bold text-cyan-300">👥 Guruh Video Room Lounge</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-cyan-300">👥 Guruh Lounge</span>
+              <span id="currentGroupCodeBadge" class="text-xs font-black text-amber-400 bg-amber-500/20 px-2.5 py-0.5 rounded-lg border border-amber-500/30">🔑 Kod: -----</span>
+              <button onclick="copyGroupRoomCode()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700 font-bold" title="Kodni nusxalash / Ulashish">
+                📋 Ulashish
+              </button>
+            </div>
             <span id="groupMemberCountBadge" class="text-xs font-semibold text-purple-400 bg-purple-500/20 px-3 py-1 rounded-full border border-purple-500/30">1/4 A'zo</span>
           </div>
 
@@ -279,6 +299,11 @@
             <!-- Group Flip Camera -->
             <button id="groupFlipCamBtn" onclick="webrtc.flipCamera()" class="ctrl-btn text-cyan-400" title="Kamerani Almashtirish">
               <i class="fas fa-camera-rotate"></i>
+            </button>
+
+            <!-- Share Room Code Button -->
+            <button onclick="copyGroupRoomCode()" class="ctrl-btn text-amber-400" title="Xona Kodini Ulashish">
+              <i class="fas fa-share-nodes"></i>
             </button>
 
             <!-- Group Gift Button -->
@@ -478,7 +503,47 @@
 
 
 
-  <!-- Application Scripts -->
+  <!-- Group Join & Public Rooms Modal -->
+  <div id="groupJoinModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="glass-panel w-full max-w-sm rounded-3xl p-6 border border-emerald-500/40 shadow-2xl animate-fade-in">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+          <span>🔑</span> Guruhga Qo'shilish
+        </h3>
+        <button onclick="closeJoinGroupModal()" class="text-slate-400 hover:text-white text-xl">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- 6-digit Code Input -->
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Xona kodini kiriting (6 xonali):</label>
+        <div class="flex gap-2">
+          <input id="groupCodeInput" type="number" placeholder="Masalan: 849201" class="glass-input flex-1 px-4 py-2.5 rounded-xl text-center text-sm font-mono tracking-widest text-emerald-300 focus:outline-none">
+          <button onclick="submitJoinGroupCode()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 font-extrabold text-xs text-white shadow-lg hover:brightness-110 active:scale-95 transition">
+            Qo'shilish
+          </button>
+        </div>
+      </div>
+
+      <div class="border-t border-slate-800 pt-4">
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-xs font-bold text-cyan-300">🔥 Aktiv Ochiq Guruhlar</span>
+          <button onclick="fetchPublicGroupRooms()" class="text-[10px] text-purple-400 hover:underline">
+            <i class="fas fa-rotate"></i> Yangilash
+          </button>
+        </div>
+        
+        <div id="publicRoomsContainer" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          <div class="text-center text-slate-500 text-[11px] py-4">Hozircha ochiq guruhlar yo'q.</div>
+        </div>
+      </div>
+
+      <button onclick="closeJoinGroupModal()" class="w-full mt-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">
+        Bekor qilish
+      </button>
+    </div>
+  </div>
   <script src="js/i18n.js?v=100.0"></script>
   <script src="js/webrtc.js?v=100.0"></script>
   <script src="js/socket.js?v=100.0"></script>

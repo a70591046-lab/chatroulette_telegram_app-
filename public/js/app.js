@@ -679,6 +679,139 @@ function showGroupRoomState(data) {
     currentGroupCreatorSocketId = data.creatorSocketId || null;
   }
 
+let currentGroupRoomCode = null;
+
+// ── Group Room Actions ─────────────────────────────
+window.createNewGroupRoom = function() {
+  const modal = document.getElementById('welcomeModeModal');
+  if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); }
+  setChatMode('group');
+  isCurrentGroupCreator = true;
+
+  showSearchingState();
+
+  webrtc.initLocalStream().then(stream => {
+    if (stream) document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
+    socket.emit('create-group-room', {
+      tgId: tgUser.tgId,
+      profile: currentProfile || { firstName: tgUser.firstName }
+    });
+  });
+};
+
+window.openJoinGroupModal = function() {
+  const modal = document.getElementById('welcomeModeModal');
+  if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); }
+  document.getElementById('groupJoinModal')?.classList.remove('hidden');
+  fetchPublicGroupRooms();
+};
+
+window.closeJoinGroupModal = function() {
+  document.getElementById('groupJoinModal')?.classList.add('hidden');
+  showWelcomeModal();
+};
+
+window.submitJoinGroupCode = function() {
+  const input = document.getElementById('groupCodeInput');
+  const code = input?.value?.trim();
+  if (!code) {
+    showToast('⚠️ Iltimos, 6 xonali xona kodini kiriting!');
+    return;
+  }
+
+  document.getElementById('groupJoinModal')?.classList.add('hidden');
+  setChatMode('group');
+  showSearchingState();
+
+  webrtc.initLocalStream().then(stream => {
+    if (stream) document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
+    socket.emit('join-group-by-code', {
+      tgId: tgUser.tgId,
+      profile: currentProfile || { firstName: tgUser.firstName },
+      roomCode: code
+    });
+  });
+};
+
+window.joinPublicRoomDirect = function(code) {
+  document.getElementById('groupJoinModal')?.classList.add('hidden');
+  setChatMode('group');
+  showSearchingState();
+
+  webrtc.initLocalStream().then(stream => {
+    if (stream) document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
+    socket.emit('join-group-by-code', {
+      tgId: tgUser.tgId,
+      profile: currentProfile || { firstName: tgUser.firstName },
+      roomCode: code
+    });
+  });
+};
+
+window.fetchPublicGroupRooms = function() {
+  if (socket && socket.connected) {
+    socket.emit('get-public-rooms');
+  }
+};
+
+window.renderPublicGroupRooms = function(rooms) {
+  const container = document.getElementById('publicRoomsContainer');
+  if (!container) return;
+
+  if (!rooms || rooms.length === 0) {
+    container.innerHTML = `<div class="text-center text-slate-500 text-[11px] py-4">Hozircha ochiq guruhlar yo'q. Yangi guruh oching!</div>`;
+    return;
+  }
+
+  container.innerHTML = rooms.map(r => `
+    <div class="flex items-center justify-between bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+      <div>
+        <div class="text-xs font-bold text-slate-200">🔑 Kod: ${r.roomCode}</div>
+        <div class="text-[10px] text-slate-400">Admin: ${r.creatorName} | ${r.memberCount}/${r.maxMembers} a'zo</div>
+      </div>
+      <button onclick="joinPublicRoomDirect('${r.roomCode}')" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/40 transition">
+        Qo'shilish
+      </button>
+    </div>
+  `).join('');
+};
+
+window.copyGroupRoomCode = function() {
+  if (!currentGroupRoomCode) return;
+  const shareText = `Guruhimga qo'shiling! Xona kodi: ${currentGroupRoomCode}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(currentGroupRoomCode);
+  }
+  if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(BACKEND_API_URL)}&text=${encodeURIComponent(shareText)}`;
+    window.Telegram.WebApp.openTelegramLink(shareUrl);
+  }
+  showToast(`📋 Xona kodi nusxalandi: ${currentGroupRoomCode}`);
+};
+
+window.setMemberVolume = function(socketId, value) {
+  const vid = document.getElementById(`group_vid_${socketId}`);
+  if (vid) {
+    vid.volume = parseFloat(value);
+  }
+};
+
+function showGroupRoomState(data) {
+  document.getElementById('initialMatchView')?.classList.add('hidden');
+  document.getElementById('searchingRadarView')?.classList.add('hidden');
+  document.getElementById('activeCallView')?.classList.add('hidden');
+
+  if (data) {
+    isCurrentGroupCreator = !!data.isCreator;
+    currentGroupCreatorSocketId = data.creatorSocketId || null;
+    currentGroupRoomCode = data.roomCode || data.roomId || null;
+
+    const codeBadge = document.getElementById('currentGroupCodeBadge');
+    if (codeBadge && currentGroupRoomCode) {
+      codeBadge.innerText = `🔑 Kod: ${currentGroupRoomCode}`;
+    }
+  }
+
   // Use display:flex since the element uses inline style
   const groupView = document.getElementById('activeGroupView');
   if (groupView) {
@@ -707,7 +840,7 @@ function showGroupRoomState(data) {
       <video autoplay playsinline muted></video>
       <div class="group-tile-name">
         <span>Siz ${myBadge}</span>
-        <span id="mic_status_self"><i class="fas fa-microphone"></i></span>
+        <span id="mic_status_self"><i class="fas fa-microphone text-emerald-400"></i></span>
       </div>
     `;
     const v = myTile.querySelector('video');
@@ -751,7 +884,7 @@ function addGroupVideoTile(socketId, profile, isTileCreator) {
 
   const isMeEga = ADMIN_TELEGRAM_IDS.includes(String(tgUser?.tgId));
   const isMeCreator = isCurrentGroupCreator;
-  const canIControl = true; // All room members can mute/kick bad behaving members (except EGA)
+  const canIControl = isMeEga || isMeCreator; // Admin or EGA controls mute/kick
 
   const isTargetEga = ADMIN_TELEGRAM_IDS.includes(String(profile?.tgId));
   const isTargetCreator = !!isTileCreator || (currentGroupCreatorSocketId === socketId);
@@ -759,13 +892,13 @@ function addGroupVideoTile(socketId, profile, isTileCreator) {
   // KICK BUTTON: Render ONLY if I have admin authority AND target is NOT EGA!
   let kickHtml = '';
   if (canIControl && !isTargetEga) {
-    kickHtml = `<button onclick="kickGroupMember('${socketId}')" class="group-tile-kick" title="Chaqirib chiqarish"><i class="fas fa-times"></i></button>`;
+    kickHtml = `<button onclick="kickGroupMember('${socketId}')" class="group-tile-kick" title="Chaqirib chiqarish"><i class="fas fa-user-minus"></i></button>`;
   }
 
   // MUTE BUTTON: Render ONLY if I have admin authority AND target is NOT EGA!
   let muteControlHtml = '';
   if (canIControl && !isTargetEga) {
-    muteControlHtml = `<button onclick="toggleRemoteMemberMic('${socketId}', false)" class="group-tile-mute" title="Mikrofonni o'chirish/yoqish"><i class="fas fa-volume-mute"></i></button>`;
+    muteControlHtml = `<button onclick="toggleRemoteMemberMic('${socketId}', false)" class="group-tile-mute" title="Mikrofonni o'chirish/yoqish"><i class="fas fa-volume-xmark"></i></button>`;
   }
 
   const giftHtml = `<button onclick="openTargetedGiftModal('${socketId}', '${(profile?.firstName || 'A\'zo').replace(/'/g, "&#39;")}', '${profile?.tgId || ''}')" class="group-tile-gift" title="Sovg'a"><i class="fas fa-gift"></i></button>`;
@@ -784,8 +917,18 @@ function addGroupVideoTile(socketId, profile, isTileCreator) {
     ${giftHtml}
     <video id="group_vid_${socketId}" autoplay playsinline></video>
     <div class="group-tile-name">
-      <span>${profile?.firstName || 'A\'zo'} ${peerBadge}</span>
-      <span id="mic_status_${socketId}"><i class="fas fa-microphone"></i></span>
+      <div class="flex items-center gap-1 overflow-hidden">
+        <span class="truncate max-w-[80px]">${profile?.firstName || 'A\'zo'}</span>
+        ${peerBadge}
+      </div>
+      <div class="flex items-center gap-1.5">
+        <!-- Volume Slider for every member -->
+        <div class="group-volume-box" title="Ovoz balandligi">
+          <i class="fas fa-volume-high text-[10px] text-cyan-400"></i>
+          <input type="range" min="0" max="1" step="0.05" value="1" class="group-volume-slider" oninput="setMemberVolume('${socketId}', this.value)">
+        </div>
+        <span id="mic_status_${socketId}"><i class="fas fa-microphone text-emerald-400"></i></span>
+      </div>
     </div>
   `;
   grid.appendChild(tile);
