@@ -938,6 +938,17 @@ function addGroupVideoTile(socketId, profile, isTileCreator) {
     peerBadge += `<span class="bg-purple-600 text-white text-[9px] font-bold px-1 rounded ml-1">⭐ Admin</span>`;
   }
 
+  // VOLUME SLIDER: Render ONLY if I have admin authority (canIControl)
+  let volumeHtml = '';
+  if (canIControl) {
+    volumeHtml = `
+      <div class="group-volume-box" title="Ovoz balandligi">
+        <i class="fas fa-volume-high text-[10px] text-cyan-400"></i>
+        <input type="range" min="0" max="1" step="0.05" value="1" class="group-volume-slider" oninput="setMemberVolume('${socketId}', this.value)">
+      </div>
+    `;
+  }
+
   tile.innerHTML = `
     ${kickHtml}
     ${muteControlHtml}
@@ -949,11 +960,7 @@ function addGroupVideoTile(socketId, profile, isTileCreator) {
         ${peerBadge}
       </div>
       <div class="flex items-center gap-1.5">
-        <!-- Volume Slider for every member -->
-        <div class="group-volume-box" title="Ovoz balandligi">
-          <i class="fas fa-volume-high text-[10px] text-cyan-400"></i>
-          <input type="range" min="0" max="1" step="0.05" value="1" class="group-volume-slider" oninput="setMemberVolume('${socketId}', this.value)">
-        </div>
+        ${volumeHtml}
         <span id="mic_status_${socketId}"><i class="fas fa-microphone text-emerald-400"></i></span>
       </div>
     </div>
