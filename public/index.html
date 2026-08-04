@@ -30,56 +30,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 flex flex-col min-h-screen">
 
-  <!-- Welcome Mode Selection Modal (Shown on Launch) -->
-  <div id="welcomeModeModal" style="display: flex !important; position: fixed; inset: 0; z-index: 999999;" class="items-center justify-center bg-slate-950/90 backdrop-blur-2xl p-4">
-    <div class="glass-panel w-full max-w-sm rounded-3xl p-6 text-center border border-cyan-500/40 shadow-2xl animate-fade-in">
-      <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-purple-600 to-cyan-500 p-1 mx-auto mb-4 animate-pulse">
-        <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-4xl">
-          ⚡
-        </div>
-      </div>
-      <h2 class="text-2xl font-black text-white mb-1 tracking-tight">Xush Kelibsiz!</h2>
-      <p class="text-xs text-slate-300 mb-6">Muloqot turini tanlang:</p>
-
-      <div class="space-y-3 mb-4">
-        <!-- 1-ga-1 Chat -->
-        <button type="button" id="modalBtnSolo" onclick="selectAppMode('solo')" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600/40 to-purple-800/50 hover:from-purple-600 hover:to-purple-700 border border-purple-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 cursor-pointer">
-          <div class="flex items-center gap-3 pointer-events-none">
-            <span class="text-2xl pointer-events-none">👤</span>
-            <div class="text-left pointer-events-none">
-              <div class="font-extrabold text-purple-200 pointer-events-none">1-ga-1 Solo Chat</div>
-              <div class="text-[10px] text-purple-300/80 font-normal pointer-events-none">Yakkama-yakka tasodifiy muloqot</div>
-            </div>
-          </div>
-          <i class="fas fa-chevron-right text-purple-400 pointer-events-none"></i>
-        </button>
-
-        <!-- Guruh Ochish (Admin bo'lish) -->
-        <button type="button" id="modalBtnCreateGroup" onclick="createNewGroupRoom()" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600/40 to-cyan-800/50 hover:from-cyan-600 hover:to-cyan-700 border border-cyan-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 cursor-pointer">
-          <div class="flex items-center gap-3 pointer-events-none">
-            <span class="text-2xl pointer-events-none">➕</span>
-            <div class="text-left pointer-events-none">
-              <div class="font-extrabold text-cyan-200 pointer-events-none">Yangi Guruh Ochish</div>
-              <div class="text-[10px] text-cyan-300/80 font-normal pointer-events-none">Siz ⭐ Admin bo'lasiz va kod beriladi</div>
-            </div>
-          </div>
-          <i class="fas fa-crown text-amber-400 pointer-events-none"></i>
-        </button>
-
-        <!-- Guruhga Qo'shilish (Kod orqali) -->
-        <button type="button" id="modalBtnJoinGroup" onclick="openJoinGroupModal()" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600/40 to-emerald-800/50 hover:from-emerald-600 hover:to-emerald-700 border border-emerald-500/60 text-white font-extrabold text-sm flex items-center justify-between shadow-xl transition-all active:scale-95 cursor-pointer">
-          <div class="flex items-center gap-3 pointer-events-none">
-            <span class="text-2xl pointer-events-none">🔑</span>
-            <div class="text-left pointer-events-none">
-              <div class="font-extrabold text-emerald-200 pointer-events-none">Guruhga Qo'shilish</div>
-              <div class="text-[10px] text-emerald-300/80 font-normal pointer-events-none">Kod kiriting yoki ochiq xonalarga kiring</div>
-            </div>
-          </div>
-          <i class="fas fa-sign-in-alt text-emerald-400 pointer-events-none"></i>
-        </button>
-      </div>
-    </div>
-  </div>
+  <!-- Welcome Mode Selection Modal removed for cleaner UI -->
 
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center pointer-events-none"></div>

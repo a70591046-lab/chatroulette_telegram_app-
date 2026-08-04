@@ -92,41 +92,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const paramMode = urlParams.get('mode');
 
   setTimeout(() => {
-    const modal = document.getElementById('welcomeModeModal');
-    if (modal) { modal.style.display = 'none'; modal.classList.add('hidden'); }
-    
-    // Unhide initial match view
+    // Ensure initial match view is visible
     const initialView = document.getElementById('initialMatchView');
-    if (initialView) initialView.classList.remove('hidden');
+    if (initialView) {
+      initialView.classList.remove('hidden');
+      initialView.style.display = 'flex';
+    }
 
-    const btnSolo = document.getElementById('initBtnSolo');
-    const btnCreate = document.getElementById('initBtnCreateGroup');
-    const btnJoin = document.getElementById('initBtnJoinGroup');
-    const titleText = document.getElementById('matchTitleText');
-    const descText = document.getElementById('matchDescText');
-
+    // Handle Telegram specific buttons
     if (paramMode === 'create_group') {
-      if (btnSolo) btnSolo.style.display = 'none';
-      if (btnJoin) btnJoin.style.display = 'none';
-      if (titleText) titleText.innerText = "Yangi Guruh";
-      if (descText) descText.innerText = "Yangi guruh xonasini ochish uchun pastdagi tugmani bosing";
+      createNewGroupRoom();
     } else if (paramMode === 'join_group') {
-      if (btnSolo) btnSolo.style.display = 'none';
-      if (btnCreate) btnCreate.style.display = 'none';
-      if (titleText) titleText.innerText = "Guruhga Qo'shilish";
-      if (descText) descText.innerText = "Mavjud guruhga kirish uchun pastdagi tugmani bosing";
+      openJoinGroupModal();
     } else if (paramMode === 'solo') {
-      if (btnCreate) btnCreate.style.display = 'none';
-      if (btnJoin) btnJoin.style.display = 'none';
-      if (titleText) titleText.innerText = "1-ga-1 Chat";
-      if (descText) descText.innerText = "Tasodifiy suhbatdosh topish uchun pastdagi tugmani bosing";
-    } else {
-      // Show welcome modal if no valid mode
-      if (modal) {
-        modal.style.display = 'flex';
-        modal.classList.remove('hidden');
-      }
-      if (initialView) initialView.classList.add('hidden');
+      // Show all 3 buttons, user MUST click to avoid autoplay blocks on 1-on-1 video
     }
   }, 200);
 });

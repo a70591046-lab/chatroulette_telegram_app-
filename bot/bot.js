@@ -349,7 +349,9 @@ function initBot() {
         Markup.button.webApp('👤 1-ga-1 Chat', webAppUrlSolo)
       ]);
       inlineButtons.push([
-        Markup.button.webApp('➕ Yangi Guruh Ochish', webAppUrlCreateGroup),
+        Markup.button.webApp('➕ Yangi Guruh Ochish', webAppUrlCreateGroup)
+      ]);
+      inlineButtons.push([
         Markup.button.webApp('🔑 Guruhga Qo\'shilish', webAppUrlJoinGroup)
       ]);
       inlineButtons.push([
@@ -360,7 +362,9 @@ function initBot() {
         Markup.button.url('👤 1-ga-1 Chat', webAppUrlSolo)
       ]);
       inlineButtons.push([
-        Markup.button.url('➕ Yangi Guruh Ochish', webAppUrlCreateGroup),
+        Markup.button.url('➕ Yangi Guruh Ochish', webAppUrlCreateGroup)
+      ]);
+      inlineButtons.push([
         Markup.button.url('🔑 Guruhga Qo\'shilish', webAppUrlJoinGroup)
       ]);
       inlineButtons.push([
