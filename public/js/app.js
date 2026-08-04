@@ -10,9 +10,6 @@ const BACKEND_API_URL = 'https://web-production-65a7f.up.railway.app';
 const ADMIN_TELEGRAM_IDS = ['7713174177', '123456789'];
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Show welcome mode modal immediately
-  if (typeof showWelcomeModal === 'function') showWelcomeModal();
-
   // Telegram WebApp SDK
   if (window.Telegram && window.Telegram.WebApp) {
     try {
@@ -90,6 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('mediaPermissionOverlay')?.classList.add('hidden');
     }
   }).catch(() => {});
+
+  // ALWAYS show welcome modal — let user pick solo/create-group/join-group
+  setTimeout(() => showWelcomeModal(), 200);
 });
 
 async function requestCameraMicPermission() {
@@ -656,19 +656,7 @@ function selectAppMode(mode) {
 }
 window.selectAppMode = selectAppMode;
 
-// Show welcome modal on load or auto-select if specified in URL
-window.addEventListener('DOMContentLoaded', () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialMode = urlParams.get('mode');
-  if (initialMode === 'solo' || initialMode === 'group') {
-    selectAppMode(initialMode);
-    return;
-  }
-
-  setTimeout(() => {
-    showWelcomeModal();
-  }, 100);
-});
+// Welcome modal is now always shown from DOMContentLoaded above
 
 let currentGroupRoomCode = null;
 
