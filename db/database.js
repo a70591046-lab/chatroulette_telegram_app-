@@ -43,6 +43,7 @@ class Database {
         this.data.friends = this.data.friends || [];
         this.data.callStats = this.data.callStats || { totalCalls: 0, totalDurationSeconds: 0, dailyActive: {} };
         this.data.broadcasts = this.data.broadcasts || [];
+        this.data.gifts = this.data.gifts || [];
       } else {
         this.save();
       }
