@@ -10,9 +10,9 @@ const BACKEND_API_URL = 'https://web-production-65a7f.up.railway.app';
 const ADMIN_TELEGRAM_IDS = ['7713174177', '123456789'];
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Prevent keyboard zoom (Ctrl +/-)
+  // Prevent keyboard zoom (Ctrl +/-) but ALLOW Ctrl+0 to reset zoom
   document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '0')) {
+    if (e.ctrlKey && (e.key === '+' || e.key === '=' || e.key === '-' || e.key === '_' || e.code === 'NumpadAdd' || e.code === 'NumpadSubtract')) {
       e.preventDefault();
     }
   });
