@@ -568,12 +568,7 @@ function setupEventListeners() {
     }
   });
 
-  document.getElementById('followBtn')?.addEventListener('click', () => {
-    if (currentPeerTgId && socket) {
-      socket.emit('send-follow', { fromTgId: tgUser.tgId, toTgId: currentPeerTgId });
-      showToast('⭐ Obuna bo\'lindi!');
-    }
-  });
+
 
   document.getElementById('friendReqBtn')?.addEventListener('click', () => {
     if (currentPeerTgId && socket) {

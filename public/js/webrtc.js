@@ -373,6 +373,7 @@ class WebRTCManager {
           if (localVid) {
             localVid.srcObject = this.localStream;
             localVid.style.transform = 'none'; // Un-mirror screen share
+            localVid.play().catch(e => console.warn('Play error:', e));
           }
 
           if (this.peerConnection) {
@@ -416,6 +417,7 @@ class WebRTCManager {
             localVid.srcObject = this.localStream;
             if (this.facingMode === 'user') localVid.style.transform = 'scaleX(-1)';
             else localVid.style.transform = 'none';
+            localVid.play().catch(e => console.warn('Play error:', e));
           }
 
           if (this.peerConnection) {

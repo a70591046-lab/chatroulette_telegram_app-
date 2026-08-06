@@ -258,8 +258,10 @@ function initSocketConnection(tgId, webrtcManager) {
 
   // ── Reactions ───────────────────────────────────
   socket.on('received-like', () => {
-    triggerHeartAnimation();
     showToast('❤️ Suhbatdosh sizga Like bosdi!');
+    if (typeof window.triggerHeartAnimation === 'function') {
+      window.triggerHeartAnimation();
+    }
   });
 
   socket.on('received-follow', () => {
