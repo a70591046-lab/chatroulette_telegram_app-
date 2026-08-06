@@ -10,6 +10,27 @@ const BACKEND_API_URL = 'https://web-production-65a7f.up.railway.app';
 const ADMIN_TELEGRAM_IDS = ['7713174177', '123456789'];
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Prevent keyboard zoom (Ctrl +/-)
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '0')) {
+      e.preventDefault();
+    }
+  });
+  document.addEventListener('wheel', function(e) {
+    if (e.ctrlKey) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Hide Screen Share button on mobile browsers
+  const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (isMobileBrowser) {
+    const ssb = document.getElementById('shareScreenBtn');
+    if (ssb) ssb.style.display = 'none';
+    const gsb = document.getElementById('groupShareScreenBtn');
+    if (gsb) gsb.style.display = 'none';
+  }
+
   // Telegram WebApp SDK
   if (window.Telegram && window.Telegram.WebApp) {
     try {
