@@ -470,6 +470,35 @@ function setupEventListeners() {
     if (socket) socket.emit('send-cam-toggle', { isOff: !isOn });
   });
 
+  document.getElementById('shareScreenBtn')?.addEventListener('click', async () => {
+    const isSharing = await webrtc.toggleScreenShare();
+    const btn = document.getElementById('shareScreenBtn');
+    const grpBtn = document.getElementById('groupShareScreenBtn');
+    if (btn) {
+      if (isSharing) {
+        btn.classList.add('bg-purple-600', 'text-white');
+        btn.classList.remove('text-purple-400');
+        if (grpBtn) {
+          grpBtn.classList.add('bg-purple-600', 'text-white');
+          grpBtn.classList.remove('text-purple-400');
+        }
+        showToast('Ekran uzatilmoqda...');
+      } else {
+        btn.classList.remove('bg-purple-600', 'text-white');
+        btn.classList.add('text-purple-400');
+        if (grpBtn) {
+          grpBtn.classList.remove('bg-purple-600', 'text-white');
+          grpBtn.classList.add('text-purple-400');
+        }
+        showToast('Ekran uzatish to\'xtatildi');
+      }
+    }
+  });
+
+  document.getElementById('groupShareScreenBtn')?.addEventListener('click', () => {
+    document.getElementById('shareScreenBtn')?.click(); // Reuse the same logic
+  });
+
   document.getElementById('flipCamBtn')?.addEventListener('click', async () => {
     const mode = await webrtc.flipCamera();
     showToast(`Kamera: ${mode === 'user' ? 'Oldi (Front)' : 'Orqa (Back)'}`);

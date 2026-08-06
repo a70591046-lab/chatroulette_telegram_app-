@@ -345,6 +345,98 @@ class WebRTCManager {
     return this.facingMode;
   }
 
+  async toggleScreenShare() {
+    this.isScreenSharing = !this.isScreenSharing;
+
+    if (this.isScreenSharing) {
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        const screenTrack = screenStream.getVideoTracks()[0];
+
+        // Listen for browser "Stop Sharing" button
+        screenTrack.onended = () => {
+          if (this.isScreenSharing) {
+            this.toggleScreenShare(); // revert to camera
+          }
+        };
+
+        if (this.localStream) {
+          const oldTrack = this.localStream.getVideoTracks()[0];
+          if (oldTrack) {
+            this.localStream.removeTrack(oldTrack);
+            oldTrack.stop(); // Stop camera momentarily to free resources
+          }
+          this.localStream.addTrack(screenTrack);
+
+          const localVid = document.getElementById('localVideo');
+          if (localVid) {
+            localVid.srcObject = this.localStream;
+            localVid.style.transform = 'none'; // Un-mirror screen share
+          }
+
+          if (this.peerConnection) {
+            const senders = this.peerConnection.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            if (videoSender) await videoSender.replaceTrack(screenTrack);
+          }
+
+          for (const pc of this.groupConnections.values()) {
+            const senders = pc.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            if (videoSender) await videoSender.replaceTrack(screenTrack);
+          }
+        }
+        return true;
+      } catch (err) {
+        console.warn('Screen share error:', err);
+        this.isScreenSharing = false;
+        return false;
+      }
+    } else {
+      // Revert to camera
+      try {
+        if (this.localStream) {
+          const oldScreenTrack = this.localStream.getVideoTracks()[0];
+          if (oldScreenTrack) oldScreenTrack.stop();
+        }
+
+        const camStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: this.facingMode } }
+        });
+        const camTrack = camStream.getVideoTracks()[0];
+
+        if (this.localStream && camTrack) {
+          const oldTrack = this.localStream.getVideoTracks()[0];
+          if (oldTrack) this.localStream.removeTrack(oldTrack);
+          this.localStream.addTrack(camTrack);
+
+          const localVid = document.getElementById('localVideo');
+          if (localVid) {
+            localVid.srcObject = this.localStream;
+            if (this.facingMode === 'user') localVid.style.transform = 'scaleX(-1)';
+            else localVid.style.transform = 'none';
+          }
+
+          if (this.peerConnection) {
+            const senders = this.peerConnection.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            if (videoSender) await videoSender.replaceTrack(camTrack);
+          }
+
+          for (const pc of this.groupConnections.values()) {
+            const senders = pc.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            if (videoSender) await videoSender.replaceTrack(camTrack);
+          }
+        }
+        return false;
+      } catch (err) {
+        console.warn('Revert to camera error:', err);
+        return false;
+      }
+    }
+  }
+
   closePeerConnection() {
     if (this.peerConnection) {
       this.peerConnection.close();
