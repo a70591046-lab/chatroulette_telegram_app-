@@ -40,7 +40,8 @@ class WebRTCManager {
         video: {
           facingMode: this.facingMode,
           width: { ideal: 640 },
-          height: { ideal: 480 }
+          height: { ideal: 480 },
+          frameRate: { ideal: 30, max: 30 }
         },
         audio: {
           echoCancellation: true,
@@ -314,7 +315,7 @@ class WebRTCManager {
 
     try {
       const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: this.facingMode } }
+        video: { facingMode: { ideal: this.facingMode }, frameRate: { ideal: 30, max: 30 } }
       });
 
       const newVideoTrack = newStream.getVideoTracks()[0];
@@ -350,7 +351,7 @@ class WebRTCManager {
 
     if (this.isScreenSharing) {
       try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 30 } }, audio: false });
         const screenTrack = screenStream.getVideoTracks()[0];
 
         // Listen for browser "Stop Sharing" button
@@ -401,7 +402,7 @@ class WebRTCManager {
         }
 
         const camStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: this.facingMode } }
+          video: { facingMode: { ideal: this.facingMode }, frameRate: { ideal: 30, max: 30 } }
         });
         const camTrack = camStream.getVideoTracks()[0];
 
