@@ -650,8 +650,8 @@
         ? res.gifts.map(g => `
             <tr class="table-row border-b border-white/5">
               <td class="py-3 px-4 font-bold text-pink-300 text-base">${giftMap[g.giftType] || g.giftType}</td>
-              <td class="py-3 px-4 font-medium text-white">${g.fromName || 'Noma\\'lum'}</td>
-              <td class="py-3 px-4 font-medium text-white">${g.toName || 'Noma\\'lum'}</td>
+              <td class="py-3 px-4 font-medium text-white">${g.fromName || "Noma'lum"}</td>
+              <td class="py-3 px-4 font-medium text-white">${g.toName || "Noma'lum"}</td>
               <td class="py-3 px-4">
                 <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${(g.mode || '').includes('group') ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'}">
                   ${g.mode === 'group-targeted' ? '👥 Guruh (Aniq a\'zoga)' : (g.mode === 'group' ? '👥 Guruh' : '👤 1-ga-1')}
