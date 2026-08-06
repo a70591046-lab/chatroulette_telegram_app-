@@ -60,7 +60,8 @@ function initBot() {
 
       adminState[tgId] = null; // reset state
       
-      const adminPanelUrl = `${config.WEBAPP_URL}/admin.html?token=${tgId}`;
+      const ts = Date.now();
+      const adminPanelUrl = `${config.WEBAPP_URL}/admin.html?token=${tgId}&t=${ts}`;
 
       const inlineButtons = [
         [Markup.button.url('🖥 Admin Panel (Web)', adminPanelUrl)],
