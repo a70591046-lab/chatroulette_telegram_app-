@@ -876,7 +876,10 @@ window.copyGroupRoomCode = function() {
 window.setMemberVolume = function(socketId, value) {
   const vid = document.getElementById(`group_vid_${socketId}`);
   if (vid) {
-    vid.volume = parseFloat(value);
+    const vol = parseFloat(value);
+    vid.volume = vol;
+    // On mobile HTML5 video, volume is ignored, but muted works.
+    vid.muted = (vol === 0);
   }
 };
 
@@ -950,11 +953,15 @@ window.openTargetedGiftModal = function(socketId, name, tgId) {
   document.getElementById('giftModal')?.classList.remove('hidden');
 };
 
-function toggleRemoteMemberMic(targetSocketId, currentMuted) {
+window.toggleRemoteMemberMic = function(btn, targetSocketId) {
+  const isMuted = btn.dataset.muted === 'true';
+  const newMuted = !isMuted;
   if (socket && socket.connected) {
-    socket.emit('group-mute-remote-user', { targetSocketId, isMuted: !currentMuted });
+    socket.emit('group-mute-remote-user', { targetSocketId, isMuted: newMuted });
   }
-}
+  btn.dataset.muted = newMuted.toString();
+  btn.innerHTML = newMuted ? '<i class="fas fa-microphone-slash text-red-500"></i>' : '<i class="fas fa-volume-xmark"></i>';
+};
 
 function kickGroupMember(targetSocketId) {
   if (socket && socket.connected) {
@@ -985,7 +992,7 @@ function addGroupVideoTile(socketId, profile, isTileCreator) {
   // MUTE BUTTON: Render ONLY if I have admin authority AND target is NOT EGA!
   let muteControlHtml = '';
   if (canIControl && !isTargetEga) {
-    muteControlHtml = `<button onclick="toggleRemoteMemberMic('${socketId}', false)" class="group-tile-mute" title="Mikrofonni o'chirish/yoqish"><i class="fas fa-volume-xmark"></i></button>`;
+    muteControlHtml = `<button onclick="toggleRemoteMemberMic(this, '${socketId}')" class="group-tile-mute" title="Mikrofonni o'chirish/yoqish" data-muted="false"><i class="fas fa-volume-xmark"></i></button>`;
   }
 
   const giftHtml = `<button onclick="openTargetedGiftModal('${socketId}', '${(profile?.firstName || 'A\'zo').replace(/'/g, "&#39;")}', '${profile?.tgId || ''}')" class="group-tile-gift" title="Sovg'a"><i class="fas fa-gift"></i></button>`;

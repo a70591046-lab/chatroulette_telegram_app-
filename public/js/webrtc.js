@@ -281,8 +281,12 @@ class WebRTCManager {
     return this.isCameraOn;
   }
 
-  toggleMic() {
-    this.isMicOn = !this.isMicOn;
+  toggleMic(forceState = null) {
+    if (forceState !== null) {
+      this.isMicOn = forceState;
+    } else {
+      this.isMicOn = !this.isMicOn;
+    }
 
     if (this.localStream) {
       this.localStream.getAudioTracks().forEach(t => {
