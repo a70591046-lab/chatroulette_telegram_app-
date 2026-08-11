@@ -156,7 +156,7 @@ async function startMatchmakingSearch() {
       initSocketConnection(tgUser.tgId, webrtc);
     }
     let waited = 0;
-    while ((!socket || !socket.connected) && waited < 80) {
+    while ((!socket || !socket.connected) && waited < 200) {
       await new Promise(r => setTimeout(r, 100));
       waited++;
     }
@@ -209,7 +209,7 @@ async function startGroupVideoSearch() {
       initSocketConnection(tgUser.tgId, webrtc);
     }
     let waited = 0;
-    while ((!socket || !socket.connected) && waited < 80) {
+    while ((!socket || !socket.connected) && waited < 200) {
       await new Promise(r => setTimeout(r, 100));
       waited++;
     }
@@ -731,7 +731,7 @@ async function ensureSocketConnected() {
       initSocketConnection(tgUser.tgId, webrtc);
     }
     let waited = 0;
-    while ((!socket || !socket.connected) && waited < 80) {
+    while ((!socket || !socket.connected) && waited < 200) {
       await new Promise(r => setTimeout(r, 100));
       waited++;
     }

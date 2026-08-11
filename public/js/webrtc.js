@@ -126,7 +126,21 @@ class WebRTCManager {
     };
 
     this.peerConnection.onconnectionstatechange = () => {
-      console.log('[WebRTC] Connection state:', this.peerConnection?.connectionState);
+      const state = this.peerConnection?.connectionState;
+      console.log('[WebRTC] Connection state:', state);
+      if (state === 'disconnected' || state === 'failed') {
+        console.log('[WebRTC] Peer disconnected abruptly. Auto-skipping...');
+        if (typeof window.skipPeer === 'function') window.skipPeer();
+      }
+    };
+
+    this.peerConnection.oniceconnectionstatechange = () => {
+      const state = this.peerConnection?.iceConnectionState;
+      console.log('[WebRTC] ICE Connection state:', state);
+      if (state === 'disconnected' || state === 'failed') {
+        console.log('[WebRTC] ICE Connection failed. Auto-skipping...');
+        if (typeof window.skipPeer === 'function') window.skipPeer();
+      }
     };
 
     return this.peerConnection;
