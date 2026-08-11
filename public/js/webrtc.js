@@ -182,8 +182,15 @@ class WebRTCManager {
         const streamToUse = incomingStream || this.remoteStream;
         remoteVid.srcObject = null; // Re-trigger decoder
         remoteVid.srcObject = streamToUse;
-        remoteVid.muted = false;
-        remoteVid.play().catch(e => console.warn('[WebRTC] remoteVideo play error:', e));
+        remoteVid.muted = true; // Start muted to allow autoplay on mobile
+        remoteVid.play().then(() => {
+          remoteVid.muted = false; // Unmute after play starts successfully
+        }).catch(e => {
+          console.warn('[WebRTC] remoteVideo play error:', e);
+          // Keep muted and retry — still shows video without audio
+          remoteVid.muted = true;
+          remoteVid.play().catch(() => {});
+        });
       }
 
       if (this.onRemoteStreamReady) this.onRemoteStreamReady(this.remoteStream);
