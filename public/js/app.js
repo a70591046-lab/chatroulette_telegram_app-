@@ -1092,10 +1092,12 @@ function updateGroupGridLayout() {
 function resetVideoCallView() {
   document.getElementById('searchingRadarView')?.classList.add('hidden');
   document.getElementById('activeCallView')?.classList.add('hidden');
+  document.getElementById('tapToUnmuteOverlay')?.classList.add('hidden');
 
   const remoteVideo = document.getElementById('remoteVideo');
   if (remoteVideo) {
     remoteVideo.srcObject = null;
+    remoteVideo.muted = false;
   }
 
   const groupView = document.getElementById('activeGroupView');
@@ -1112,6 +1114,19 @@ function resetVideoCallView() {
   if (typeof currentPeerTgId !== 'undefined') currentPeerTgId = null;
   showWelcomeModal();
 }
+
+// iOS Safari tap-to-unmute handler
+window.tapToUnmute = function() {
+  const remoteVid = document.getElementById('remoteVideo');
+  if (remoteVid) {
+    remoteVid.muted = false;
+    remoteVid.play().then(() => {
+      document.getElementById('tapToUnmuteOverlay')?.classList.add('hidden');
+    }).catch(() => {
+      // Still blocked — keep showing overlay
+    });
+  }
+};
 
 function switchTab(tabId) {
   ['chatTabContent', 'profileTabContent'].forEach(id => {

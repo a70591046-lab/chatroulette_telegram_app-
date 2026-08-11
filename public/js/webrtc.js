@@ -180,16 +180,21 @@ class WebRTCManager {
       const remoteVid = document.getElementById('remoteVideo');
       if (remoteVid) {
         const streamToUse = incomingStream || this.remoteStream;
-        remoteVid.srcObject = null; // Re-trigger decoder
+        remoteVid.srcObject = null;
         remoteVid.srcObject = streamToUse;
-        remoteVid.muted = true; // Start muted to allow autoplay on mobile
+        remoteVid.muted = true; // Start muted for autoplay on mobile
+        const overlay = document.getElementById('tapToUnmuteOverlay');
         remoteVid.play().then(() => {
-          remoteVid.muted = false; // Unmute after play starts successfully
+          // Successfully playing — try to unmute
+          remoteVid.muted = false;
+          if (overlay) overlay.classList.add('hidden');
         }).catch(e => {
           console.warn('[WebRTC] remoteVideo play error:', e);
-          // Keep muted and retry — still shows video without audio
+          // Play with audio failed — keep muted and show tap-to-unmute
           remoteVid.muted = true;
-          remoteVid.play().catch(() => {});
+          remoteVid.play().then(() => {
+            if (overlay) overlay.classList.remove('hidden');
+          }).catch(() => {});
         });
       }
 
