@@ -669,10 +669,22 @@ function showVideoRoomState(peerProfile) {
   document.getElementById('leaveChatTopBtn')?.classList.remove('hidden');
 
   const localVid = document.getElementById('localVideo');
-  if (localVid && webrtc && webrtc.localStream) {
-    localVid.srcObject = webrtc.localStream;
-    localVid.muted = true;
-    localVid.play().catch(() => {});
+  if (localVid) {
+    if (webrtc && webrtc.localStream && webrtc.localStream.active) {
+      localVid.srcObject = null;
+      localVid.srcObject = webrtc.localStream;
+      localVid.muted = true;
+      localVid.play().catch(() => {});
+    } else if (webrtc) {
+      webrtc.initLocalStream().then(stream => {
+        if (stream && localVid) {
+          localVid.srcObject = null;
+          localVid.srcObject = stream;
+          localVid.muted = true;
+          localVid.play().catch(() => {});
+        }
+      });
+    }
   }
 
   if (peerProfile) {
@@ -937,9 +949,18 @@ function showGroupRoomState(data) {
     `;
     const v = myTile.querySelector('video');
     v.muted = true; // MUST be muted — prevents local audio echo
-    if (webrtc && webrtc.localStream) {
+    if (webrtc && webrtc.localStream && webrtc.localStream.active) {
+      v.srcObject = null;
       v.srcObject = webrtc.localStream;
       v.play().catch(() => {});
+    } else if (webrtc) {
+      webrtc.initLocalStream().then(stream => {
+        if (stream && v) {
+          v.srcObject = null;
+          v.srcObject = stream;
+          v.play().catch(() => {});
+        }
+      });
     }
     grid.appendChild(myTile);
     updateGroupGridLayout();

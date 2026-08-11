@@ -47,13 +47,10 @@ function initSocketConnection(tgId, webrtcManager) {
     console.log('[Socket] Match found! isInitiator:', data.isInitiator);
     currentPeerSocketId = data.peerSocketId;
     currentPeerTgId = data.peerProfile?.tgId;
+    // Make sure local stream exists BEFORE creating peer connection and showing room state
+    await webrtcManager.ensureLocalStream();
     hideSearchingState();
     showVideoRoomState(data.peerProfile);
-
-    // Make sure local stream exists BEFORE creating peer connection
-    if (!webrtcManager.localStream || !webrtcManager.localStream.active) {
-      await webrtcManager.initLocalStream();
-    }
 
     if (data.isInitiator) {
       try {

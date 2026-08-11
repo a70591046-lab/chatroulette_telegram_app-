@@ -24,21 +24,31 @@ class WebRTCManager {
     return this.groupRemoteStreams.get(targetSocketId) || null;
   }
 
-  async initLocalStream() {
-    // If stream is active, reuse it immediately without asking permission again
-    if (this.localStream && this.localStream.active) {
+  async initLocalStream(forceRefresh = false) {
+    // If stream is active and tracks are live, reuse it immediately
+    if (!forceRefresh && this.localStream && this.localStream.active) {
       const vTrack = this.localStream.getVideoTracks()[0];
       const aTrack = this.localStream.getAudioTracks()[0];
       if (vTrack && vTrack.readyState === 'live' && aTrack && aTrack.readyState === 'live') {
+        vTrack.enabled = this.isCameraOn;
+        aTrack.enabled = this.isMicOn;
         if (this.onLocalStreamReady) this.onLocalStreamReady(this.localStream);
         return this.localStream;
       }
     }
 
+    // Stop old tracks if any to release camera hardware
+    if (this.localStream) {
+      this.localStream.getTracks().forEach(t => {
+        try { t.stop(); } catch(e) {}
+      });
+      this.localStream = null;
+    }
+
     try {
       const constraints = {
         video: {
-          facingMode: this.facingMode,
+          facingMode: { ideal: this.facingMode },
           width: { ideal: 640 },
           height: { ideal: 480 },
           frameRate: { ideal: 30, max: 30 }
@@ -54,7 +64,19 @@ class WebRTCManager {
       this.hasPermission = true;
       localStorage.setItem('media_permission_granted', 'true');
 
+      this.localStream.getVideoTracks().forEach(t => t.enabled = this.isCameraOn);
+      this.localStream.getAudioTracks().forEach(t => t.enabled = this.isMicOn);
+
       if (this.onLocalStreamReady) this.onLocalStreamReady(this.localStream);
+
+      const localVid = document.getElementById('localVideo');
+      if (localVid) {
+        localVid.srcObject = null;
+        localVid.srcObject = this.localStream;
+        localVid.muted = true;
+        localVid.play().catch(() => {});
+      }
+
       return this.localStream;
     } catch (err) {
       console.warn('Fallback getUserMedia attempt:', err);
@@ -62,15 +84,40 @@ class WebRTCManager {
         this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         this.hasPermission = true;
         localStorage.setItem('media_permission_granted', 'true');
+
+        this.localStream.getVideoTracks().forEach(t => t.enabled = this.isCameraOn);
+        this.localStream.getAudioTracks().forEach(t => t.enabled = this.isMicOn);
+
         if (this.onLocalStreamReady) this.onLocalStreamReady(this.localStream);
+
+        const localVid = document.getElementById('localVideo');
+        if (localVid) {
+          localVid.srcObject = null;
+          localVid.srcObject = this.localStream;
+          localVid.muted = true;
+          localVid.play().catch(() => {});
+        }
+
         return this.localStream;
       } catch (e) {
         console.warn('Permission not yet granted by user:', e.message);
         this.hasPermission = false;
-        // Graceful fallback - DO NOT ALERT OR CRASH!
         return null;
       }
     }
+  }
+
+  async ensureLocalStream(force = false) {
+    if (force || !this.localStream || !this.localStream.active) {
+      await this.initLocalStream(true);
+    } else {
+      const vTrack = this.localStream.getVideoTracks()[0];
+      const aTrack = this.localStream.getAudioTracks()[0];
+      if (!vTrack || vTrack.readyState !== 'live' || !aTrack || aTrack.readyState !== 'live') {
+        await this.initLocalStream(true);
+      }
+    }
+    return this.localStream;
   }
 
   // 1-on-1 Mode Connection
@@ -88,7 +135,9 @@ class WebRTCManager {
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => {
         try {
-          this.peerConnection.addTrack(track, this.localStream);
+          if (track.readyState === 'live') {
+            this.peerConnection.addTrack(track, this.localStream);
+          }
         } catch(e) {
           console.warn('[WebRTC] addTrack error:', e);
         }
@@ -111,7 +160,9 @@ class WebRTCManager {
 
       const remoteVid = document.getElementById('remoteVideo');
       if (remoteVid) {
-        remoteVid.srcObject = incomingStream || this.remoteStream;
+        const streamToUse = incomingStream || this.remoteStream;
+        remoteVid.srcObject = null; // Re-trigger decoder
+        remoteVid.srcObject = streamToUse;
         remoteVid.muted = false;
         remoteVid.play().catch(e => console.warn('[WebRTC] remoteVideo play error:', e));
       }
@@ -147,6 +198,7 @@ class WebRTCManager {
   }
 
   async createOffer() {
+    await this.ensureLocalStream();
     this.createPeerConnection();
     const offer = await this.peerConnection.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
     await this.peerConnection.setLocalDescription(offer);
@@ -154,6 +206,7 @@ class WebRTCManager {
   }
 
   async handleOffer(sdp) {
+    await this.ensureLocalStream();
     this.createPeerConnection();
     await this.peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
     const answer = await this.peerConnection.createAnswer();
@@ -214,7 +267,9 @@ class WebRTCManager {
       // Bind directly to the video element
       const vidEl = document.getElementById(`group_vid_${targetSocketId}`);
       if (vidEl) {
-        vidEl.srcObject = (incomingStream && incomingStream.getVideoTracks().length > 0) ? incomingStream : remoteMediaStream;
+        const streamToUse = (incomingStream && incomingStream.getVideoTracks().length > 0) ? incomingStream : remoteMediaStream;
+        vidEl.srcObject = null; // Re-trigger decoder
+        vidEl.srcObject = streamToUse;
         vidEl.muted = false;
         vidEl.play().catch(e => console.warn('[Group] Remote video play:', e));
       }
@@ -239,6 +294,7 @@ class WebRTCManager {
   }
 
   async createGroupOffer(targetSocketId, onIce) {
+    await this.ensureLocalStream();
     const pc = this.createGroupPeerConnection(targetSocketId, onIce);
     const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
     await pc.setLocalDescription(offer);
@@ -246,6 +302,7 @@ class WebRTCManager {
   }
 
   async handleGroupOffer(targetSocketId, offerSdp, onIce) {
+    await this.ensureLocalStream();
     const pc = this.createGroupPeerConnection(targetSocketId, onIce);
     await pc.setRemoteDescription(new RTCSessionDescription(offerSdp));
     const answer = await pc.createAnswer();
